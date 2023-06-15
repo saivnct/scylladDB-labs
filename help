@@ -1,0 +1,235 @@
+
+I. SINGLE INSTANCE
+	1. Run single instance:
+		docker run --name scyllaU -d scylladb/scylla:4.5.0 --overprovisioned 1 --smp 1
+		
+		Check status:
+			docker exec -it scyllaU nodetool status
+		
+		CQL Shell:
+			docker exec -it scyllaU cqlsh
+
+	2. Create a keyspace called “mykeyspace”:
+		CREATE KEYSPACE mykeyspace WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1};		
+
+		NOTE: Keep in mind that SimpleStrategy should not be used in production.
+
+	3. Create a table
+		use mykeyspace; 
+
+		CREATE TABLE users ( user_id int, fname text, lname text, PRIMARY KEY((user_id))); 
+
+		insert into users(user_id, fname, lname) values (1, 'rick', 'sanchez'); 
+		
+		insert into users(user_id, fname, lname) values (4, 'rust', 'cohle'); 
+
+		select * from users;
+
+
+
+
+II. HIGH AVAILABILITY
+	1. Run 3-node ScyllaDB Docker cluster
+		docker run --name Node_X -d scylladb/scylla:5.2 --overprovisioned 1 --smp 1
+
+		docker run --name Node_Y -d scylladb/scylla:5.2 --seeds="$(docker inspect --format='{{ .NetworkSettings.IPAddress }}' Node_X)" --overprovisioned 1 --smp 1
+
+
+		docker run --name Node_Z -d scylladb/scylla:5.2 --seeds="$(docker inspect --format='{{ .NetworkSettings.IPAddress }}' Node_X)" --overprovisioned 1 --smp 1
+
+
+		NOTE: 
+			“$(docker inspect –format='{{ .NetworkSettings.IPAddress }}’ Node_X)” translates to the IP address of Node-X
+			--overprovisione 1 =>  disable optimizations for running in an statically partitioned environment
+			--smp 1 => restrict Scylla to 1 CPUs 
+
+		NOTE: Error std::runtime_error (Could not setup Async I/O: Resource temporarily unavailable. The most common cause is not enough request capacity in /proc/sys/fs/aio-max-nr .....
+
+			➜  ~ sudo nano /etc/sysctl.conf
+			fs.aio-max-nr = 1048576
+			➜  ~ sudo sysctl -p           
+			➜  ~ cat /proc/sys/fs/aio-max-nr
+			1048576
+
+
+	2. Check the node status - wait until all nodes status UN:
+		docker exec -it Node_X nodetool status  
+		docker exec -it Node_Y nodetool status  
+		docker exec -it Node_Z nodetool status  
+
+			
+
+
+
+	3. Run a CQL shell: 
+		docker exec -it Node_Z cqlsh 
+
+	4. Create a keyspace called “mykeyspace”, with a Replication Factor of three: 
+		CREATE KEYSPACE mykeyspace WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', 'replication_factor' : 3};
+
+
+	5. create a table
+		use mykeyspace; 
+
+		CREATE TABLE users ( user_id int, fname text, lname text, PRIMARY KEY((user_id))); 
+
+		insert into users(user_id, fname, lname) values (1, 'rick', 'sanchez'); 
+		insert into users(user_id, fname, lname) values (4, 'rust', 'cohle'); 
+
+		select * from users;
+
+	6. Test Read and write at different consistency levels
+
+		use mykeyspace; 
+
+		CONSISTENCY QUORUM 
+
+		insert into users (user_id, fname, lname) values (7, 'eric', 'cartman');
+			-> Success
+			
+
+		
+
+
+	7. Take down Node_Y 
+
+		docker stop Node_Y 
+
+		docker exec -it Node_Z nodetool status 
+
+
+	8. Test Read and write at different consistency levels
+
+
+		use mykeyspace;
+
+		CONSISTENCY QUORUM 
+
+		insert into users (user_id, fname, lname) values (9, 'avon', 'barksdale'); 
+			-> Success 
+
+		select * from users; 
+			-> Success 
+
+
+		CONSISTENCY ALL 
+
+		insert into users (user_id, fname, lname) values (10, 'vm', 'varga'); 
+			-> Failed: NoHostAvailable  
+
+		select * from users; 
+			-> Failed: NoHostAvailable   
+
+
+
+
+III. MULTI DC CLUSTER
+	git clone https://github.com/scylladb/scylla-code-samples.git
+
+	cd scylla-code-samples/mms
+
+	Run DC 1:
+		docker-compose up -d
+		-> After roughly 60 seconds, the first datacenter, DC1, will be created
+
+	Run DC 2:
+		docker-compose -f docker-compose-dc2.yml up -d
+		-> After about 60 seconds, you should be able to see DC1 and DC2 when running the “nodetool status” command
+
+	Check Status:
+		docker exec -it scylla-node1 nodetool status
+
+	Create the Keyspace, with the Network Topology Strategy, and replication of  (‘DC1’: 3, ‘DC2’: 2 => the replication factor of the Keyspace will be 5):
+		docker exec -it scylla-node2 cqlsh
+		
+		CREATE KEYSPACE scyllaU WITH REPLICATION = {'class' : 'NetworkTopologyStrategy', 'DC1' : 3, 'DC2' : 2};
+
+		use scyllaU;
+
+		DESCRIBE KEYSPACE
+
+	To see the tokens for each node on our cluster, we use the nodetool ring command:
+		docker exec -it scylla-node1 nodetool ring
+
+	Another way to show the tokens present on a specific node is with the describing command using the keyspace as a parameter:
+		docker exec -it scylla-node1 nodetool describering scyllau
+
+	Hands-on: read and write in a multi-dc cluster:
+		docker exec -it scylla-node2 cqlsh
+		use scyllaU;
+
+		1. Set the consistency to EACH_QUORUM => each DC must have a LOCAL_QUORUM.
+			consistency EACH_QUORUM;
+
+			CREATE TABLE users ( user_id int, fname text, lname text, PRIMARY KEY((user_id))); 
+			insert into users(user_id, fname, lname) values (1, 'rick', 'sanchez'); 
+			insert into users(user_id, fname, lname) values (4, 'rust', 'cohle'); 
+			-> Success
+
+		2. pause DC2
+			docker-compose -f docker-compose-dc2.yml pause
+			-> Make sure that DC2 is actually down. This might take a few seconds
+
+			insert into users(user_id, fname, lname) values (8, 'lorne', 'malvo'); 
+			-> Failed: NoHostAvailable
+
+		3. restart DC2
+			docker-compose -f docker-compose-dc2.yml unpause 
+
+
+			docker exec -it scylla-node2 nodetool status
+			-> Make sure all DC2 node up
+
+
+			insert into users(user_id, fname, lname) values (8, 'lorne', 'malvo');
+			-> Success
+
+
+			select * from users;
+			-> Failed: NoHostAvailable => Reads are NOT supported for CL EACH_QUORUM
+
+			
+			consistency LOCAL_QUORUM;
+			select * from users;
+			-> Success
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

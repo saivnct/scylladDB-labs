@@ -1,0 +1,131 @@
+{
+	"info": {
+		"_postman_id": "39d44606-7f50-426e-a0a1-4433437efdf1",
+		"name": "Springdemo-prepared",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "create stock AAPL",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"symbol\": \"AAPL\",\r\n    \"date\":\"202111181200\",\r\n    \"value\": \"26\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8081/api/v1/stocks",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"v1",
+						"stocks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create stock MSFT",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"symbol\": \"MSFT\",\r\n    \"date\":\"202111121200\",\r\n    \"value\": \"12\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8081/api/v1/stocks",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"v1",
+						"stocks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete stock MSFT",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "localhost:8081/api/v1/stocks/MSFT/202111121200",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"v1",
+						"stocks",
+						"MSFT",
+						"202111121200"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get stock AAPL",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8081/api/v1/stocks/AAPL/202111181200",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"v1",
+						"stocks",
+						"AAPL",
+						"202111181200"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get stocks",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8081/api/v1/stocks",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"v1",
+						"stocks"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

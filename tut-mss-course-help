@@ -1,0 +1,236 @@
+1. Setting up a Cluster
+
+	cd scylla-code-samples/mms
+	docker-compose up -d
+	docker exec -it scylla-node1 nodetool status
+
+2. create the keyspace, table for the catalog: The Mutant Catalog is the keyspace that was created to gather basic metrics for each mutant, such as name and contact information...
+	For this keyspace, we will use a replication factor of three with the NetworkTopologyStrategy. With a replication factor set to three => there will be a replica of the data on each node.
+
+		docker exec -it scylla-node1 cqlsh
+
+		CREATE KEYSPACE catalog WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy','DC1' : 3};
+
+		use catalog;
+
+		CREATE TABLE mutant_data (
+		   first_name text,
+		   last_name text,
+		   address text,
+		   picture_location text,
+		   PRIMARY KEY((first_name, last_name)));
+
+		insert into mutant_data ("first_name","last_name","address","picture_location") VALUES ('Bob','Loblaw','1313 Mockingbird Lane', 'http://www.facebook.com/bobloblaw');
+		insert into mutant_data ("first_name","last_name","address","picture_location") VALUES ('Bob','Zemuda','1202 Coffman Lane', 'http://www.facebook.com/bzemuda');
+		insert into mutant_data ("first_name","last_name","address","picture_location") VALUES ('Jim','Jeffries','1211 Hollywood Lane', 'http://www.facebook.com/jeffries');
+
+		select * from mutant_data;
+
+		select * from mutant_data where first_name='Bob' AND last_name='Loblaw';
+
+
+3. Create the "tracking system" keyspace and table that will allow us to keep track of the following mutant metrics: Name, Timestamp, Location, Speed, Velocity, Heat, Telepathy powers
+	For this keyspace, we will use a replication factor of three with the NetworkTopologyStrategy. With a replication factor set to three => there will be a replica of the data on each node.
+
+		CREATE KEYSPACE tracking WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy','DC1' : 3};
+
+		use tracking;
+
+		CREATE TABLE tracking_data (
+	       first_name text,
+	       last_name text,
+	       timestamp timestamp,
+	       location varchar,
+	       speed double,
+	       heat double,
+	       telepathy_powers int,
+	       primary key((first_name, last_name), timestamp))
+	       WITH CLUSTERING ORDER BY (timestamp DESC)
+	       AND COMPACTION = {'class': 'TimeWindowCompactionStrategy',
+	           'base_time_seconds': 3600,
+	           'max_sstable_age_days': 1};
+
+    => The primary key in ScyllaDB usually consists of two parts: Partition key and Clustering columns. The intent of a partition key is to identify the node that stores a particular row. The clustering key is the second part of the primary key, and its purpose is to store the data in sorted order. For this table, we will use the timestamp column so we can search for data on a day-to-day basis for the mutants.
+    => A composite partition key is simply a way to use two or more column as a partition key. In the table created above, our composite partition key is first_name, last_name. Since first_name and last_name in the tracking_data table is the partition key, all of the rows in each partition are ordered by the clustering key, timestamp.
+
+
+
+    ScyllaDB stores data in SSTables on the disk. When compaction operations run, it will merge multiple SSTables into a single new one. It is important to choose the right compaction strategy for the right use case
+    	=> For the MMS, we chose the TimeWindowCompactionStrategy because it was designed for time series data and uses the time of a data point as the clustering key
+
+    In a time-series use case, we see some common features:
+    	1. Clustering key and write time are correlated.
+		2. Data is added in time order. Only a few out-of-order writes, typically rearranged by just a few seconds.
+		3. Data is only deleted through TTL (Time To Live) or by deleting an entire partition.
+		4. Data is written at a nearly constant rate.
+		5. A query on a time series is usually a range query on a given partition—the most common query is of the form “values from the last hour/day/week.”
+
+	Time window compaction helps in making the TTL (expiration times on data) more efficient. ScyllaDB keeps track of each SSTables most recent expiration time, and when it notices the oldest SSTables most recent expiration time has passed, it can drop the entire sstable without bothering to check the expiration time of the individual cells it contains. This is especially useful when all data is inserted with the same TTL.
+
+	The compaction argument “base_time_seconds” is the size of the first time window which tells ScyllaDB how much of the most newly written data should be compacted together. All data older than base_time_seconds value will be grouped together with other data the same age. This will help expensive compaction operations run less frequently since we will be recording large amounts of data on the mutants.
+
+	The compaction argument “max_sstable_age_days” stops compacting SSTables that have data older than this number of days. If this value is set low, it will help to reduce the total number of times the same value is rewritten to disk and prevents compaction of the largest SSTables.
+
+	Insert Data:
+
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Jim','Jeffries','2017-11-11 08:05+0000','New York',1.0,3.0,17) ;
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Jim','Jeffries','2017-11-11 09:05+0000','New York',2.0,4.0,27) ;
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Jim','Jeffries','2017-11-11 10:05+0000','New York',3.0,5.0,37) ;
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Jim','Jeffries','2017-11-11 10:22+0000','New York',4.0,12.0,47) ;
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Jim','Jeffries','2017-11-11 11:05+0000','New York',4.0,9.0,87) ;
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Jim','Jeffries','2017-11-11 12:05+0000','New York',4.0,24.0,57) ;
+
+
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Bob','Loblaw','2017-11-11 08:05+0000','Cincinnati',2.0,6.0,5) ;
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Bob','Loblaw','2017-11-11 09:05+0000','Cincinnati',4.0,1.0,10) ;
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Bob','Loblaw','2017-11-11 10:05+0000','Cincinnati',6.0,1.0,15) ;
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Bob','Loblaw','2017-11-11 10:22+0000','Cincinnati',8.0,3.0,6) ;
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Bob','Loblaw','2017-11-11 11:05+0000','Cincinnati',10.0,2.0,3) ;
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Bob','Loblaw','2017-11-11 12:05+0000','Cincinnati',12.0,10.0,60) ;
+
+	Query data:
+		select * from tracking.tracking_data;
+
+
+	Query a mutant’s information between different times on the same day:
+		SELECT * FROM tracking.tracking_data WHERE first_name='Jim' and last_name='Jeffries' and timestamp>='2017-11-11 09:05+0000' and timestamp<='2017-11-11 10:05+0000';
+
+	Query a mutant’s latest record:	
+		SELECT * FROM tracking.tracking_data WHERE first_name='Jim' and last_name='Jeffries' LIMIT 1;
+
+	Query for mutant’s highest speed:
+		SELECT MAX(speed) FROM tracking.tracking_data WHERE first_name='Jim' and last_name='Jeffries';
+
+
+4. Bringing up the Second Datacenter
+	
+	cd scylla-code-samples/mms
+
+	docker-compose -f docker-compose-dc2.yml up -d
+		-> After about 60 seconds, you should be able to see DC1 and DC2 when running the “nodetool status” command
+
+	docker exec -it scylla-node1 nodetool status
+
+5. Configuring the keyspaces for Multi-DC
+	The cqlsh utility will allow us to make changes in KEYSPACE with the “ALTER KEYSPACE” statement
+		docker exec -it scylla-node1 cqlsh
+
+		ALTER KEYSPACE catalog WITH REPLICATION = {'class': 'NetworkTopologyStrategy', 'DC1':3, 'DC2':3};
+
+		ALTER KEYSPACE tracking WITH REPLICATION = {'class': 'NetworkTopologyStrategy', 'DC1':3, 'DC2':3};
+
+
+	Additionally, we need to convert the system keyspaces:
+		ALTER KEYSPACE system_auth WITH replication = { 'class' : 'NetworkTopologyStrategy', 'DC1' : 3, 'DC2' : 3};
+
+		ALTER KEYSPACE system_distributed WITH replication = { 'class' : 'NetworkTopologyStrategy', 'DC1' : 3, 'DC2' : 3};
+
+		ALTER KEYSPACE system_traces WITH replication = { 'class' : 'NetworkTopologyStrategy', 'DC1' : 3, 'DC2' : 3};
+
+	Make sure the data is consistent and in sync in each datacenter. We can accomplish data consistency by running the “nodetool rebuild” command on each node in the DC2. This command rebuilds a node’s data by streaming data from other nodes in the cluster.
+		docker exec -it scylla-node4 nodetool rebuild -- DC1
+
+		docker exec -it scylla-node5 nodetool rebuild -- DC1
+
+		docker exec -it scylla-node6 nodetool rebuild -- DC1
+
+		=>After that command is run, the data from the first datacenter will be streamed to the second, and no output should be displayed from the terminal
+
+	Make sure that our keyspaces are accessible from the second datacenter with the following commands:
+		docker exec -it scylla-node4 cqlsh
+
+		describe catalog;
+
+		describe tracking;
+
+		select * from catalog.mutant_data;
+
+		select * from tracking.tracking_data;
+
+
+6. Multi-datacenter Consistency Levels
+	Take down DC2
+		docker-compose -f docker-compose-dc2.yml pause
+		-> This can take around 60 seconds
+
+	Check that DC2 is down:
+		docker exec -it scylla-node1 nodetool status
+
+	
+	Change Consistency Levels to EACH_QUORUM
+		docker exec -it scylla-node1 cqlsh		
+
+		use tracking;
+
+		consistency EACH_QUORUM;
+
+		select * from tracking.tracking_data;
+			-> Failed: EACH_QUORUM is only supported for writes
+
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Alex ','Jones','2018-05-11 08:05+0000','Dallas',1.0,300.0,17) ;
+			-> Failed: NoHostAvailable
+
+	Change Consistency Levels to LOCAL_QUORUM 	
+		consistency LOCAL_QUORUM;
+
+		INSERT INTO tracking.tracking_data ("first_name","last_name","timestamp","location","speed","heat","telepathy_powers") VALUES ('Alex ','Jones','2018-05-11 08:05+0000','Dallas',1.0,300.0,17); 
+			-> Success
+
+		select * from tracking.tracking_data;
+			-> Success
+
+
+	Bring back DC2. "nodetool repair" should be run to ensure data consistency across both sites
+
+		docker-compose -f docker-compose-dc2.yml unpause
+
+		docker exec -it scylla-node4 nodetool status
+
+		docker exec -it scylla-node4 nodetool repair
+
+		docker exec -it scylla-node4 cqlsh	
+
+		use tracking;
+
+		select * from tracking.tracking_data;
+
+
+7. Creating the Materialized Views
+		docker exec -it mms_scylla-node1_1 cqlsh
+		
+		use tracking;
+		
+		describe tracking;
+
+	According to our original table schema for tracking.tracking_data, our primary keys are first_name, last_name, and timestamp.
+	=> When creating a Materialized View, we will need to reference all of the primary keys that were used when creating the tracking_data table
+
+	Let’s assume that Division 3 wants to retrieve only the mutant’s timestamp at a certain location. The following Materialized View will show only the timestamp and location for each mutant without the other data columns:
+
+		CREATE MATERIALIZED VIEW get_locations AS
+		SELECT location FROM tracking.tracking_data
+		WHERE location IS NOT NULL AND first_name IS NOT NULL AND last_name IS NOT NULL AND timestamp IS NOT NULL
+		PRIMARY KEY((location), first_name, last_name, timestamp);
+
+
+	Get data from the Materialized View with the following command:
+		select * from get_locations;
+
+		select * from get_locations WHERE location='Cincinnati';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
