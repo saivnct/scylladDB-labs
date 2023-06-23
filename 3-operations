@@ -1,0 +1,205 @@
+1. Nodetool and Logs
+	- Nodetool is a command-line interface that enables managing and collecting information on ScyllaDB clusters. 
+	- It has two types of commands: 
+		- informative commands
+		- management commands
+	- On systems with systemd, ScyllaDB logs can be retrieved with the journalctl command.
+
+
+	Ex:
+		- Print cluster Info:
+			nodetool status
+
+		- Print node info:
+			nodetool info
+
+		- Get statistics about a table:	
+			nodetool cfhistograms <keyspace> <cfname>
+
+			ex: nodetool cfhistograms catalog mutant_data
+
+		- Get in-depth diagnostics regard specific table
+			nodetool tablestats
+
+			nodetool tablestats catalog.mutant_data
+
+		- Get network info on privided host
+			nodetool netstats
+
+		- Show the gossip info for the cluster
+			nodetool gossipinfo
+
+		- Triggers the immediate cleanup of keys no longer belonging to a node
+			nodetool cleanup
+
+		- Print history of compaction
+			nodetool compactionhistory
+
+		- Print statistics on compaction
+			nodetool compactionstats
+
+		- Force a (major) compaction on one or more column families
+			nodetool compact
+
+		- Get top partitions
+			nodetool toppartitions
+
+
+2. Tracing
+	- Tracing enables analyzing internal data flows in a ScyllaDB cluster. 
+	- It’s useful to observe behaviors of specific queries and to troubleshoot network issues, data transfer, and data replication problems
+
+3. Bootstrap a new node into a Cluster
+	- Edit params in scylla.yaml file
+		sudo nano /etc/scylla/scylla.yaml
+			cluster_name -> must be identical to the cluster name added to!
+			listen_address
+			seeds -> used during startup to discover the cluster
+			rpc_address -> address for client connection using CQL
+			Auto_boostrap: true (default) -> allow new nodes to migrate data to themselves automatically
+			Endpoint_snitch = Ec2MultiRegionSnitch / GoogleCloudSnitch / GPFS (gossiping property files snitch, use GPFS for bare metal and other cloud vendors)
+
+	- If the node has been run before:
+		- Stop scylla server
+			sudo systemctl stop scylla-server
+
+		- Delete the content of Data, Commitlog and Hints folders
+			sudo rm -rf /var/lib/scylla/commitlog/*
+			sudo rm -rf /var/lib/scylla/data/*
+			sudo rm -rf /var/lib/scylla/hints/*
+
+	- Start scylla server
+		sudo systemctl start scylla-server
+
+	- Verify that the node joined the cluster
+		nodetool status -> UJ -> UN
+
+	- Use 'nodetool cleanup' on all the 'veteren' nodes in the cluster
+
+
+4. Remove a node from a Cluster
+	
+	- Check status of the node:
+		nodetool status
+
+	- If the node is in 'UN' state, use 'decommission' option:
+		nodetool decommission 
+			
+		NOTE: this is irreversible action!!!! Using it with caution
+
+	- Verify the other nodes in the cluster have sufficient disk space
+
+	- Verify that data is streaming to the other nodes by running this command from another node in cluster:
+		nodetool netstats
+
+	- Check status of the node until it become down 'DN'
+		nodetool status
+
+	- When node is down 'DN', remove it from cluster
+		nodetool removenode xxx-xxx-xxx
+
+	- Verify the node was removed
+		nodetool status
+
+	- Manually delete the data from removed node
+		sudo rm -rf /var/lib/scylla/commitlog/*
+		sudo rm -rf /var/lib/scylla/data/*
+		sudo rm -rf /var/lib/scylla/hints/*
+
+
+5. Add a data center
+	- Configure scylla.yaml on the existing nodes/DCs
+		Endpoint_snitch = Ec2MultiRegionSnitch / GPFS
+		seeds <ip>
+
+	- Make sure all your keyspace are using NetworkTopologyStrategy
+
+	- For GPFS: set the DC and Rack Names in file 'cassandra-rackdc.properties'
+
+	- In the existing datacenter(s) restart Scylla nodes one by one
+
+	- Install scylla on new node
+
+	- Configure scylla.yaml on the each new nodes/DCs
+		Endpoint_snitch = Ec2MultiRegionSnitch / GPFS
+		seeds <ip>
+
+	- For GPFS: set the DC and Rack Names in file 'cassandra-rackdc.properties'
+
+	- In the new datacenter, start Scylla nodes one by one
+
+	- Verify that the nodes were added to the cluster using nodetool status
+
+	- Alter keyspaces (include system keyspaces and your keyspaces) to replicate into the new DC
+		ALTER KEYSPACE "new_dc" WITH REPLICATION = {'class':'NetworkTopologyStrategy','old_dc':3, 'new_dc':3};
+
+	- Run rebuild command on each node in the new DC (one by one)
+		nodetool rebuild <new_dc> <old_dc>
+
+	- Run full cluster repair
+
+
+6. Removing Data center from a cluster
+	- Run repair on each node in the DC that is going tobe decommissioned
+
+	- Modify Schema: ALTER each keyspaces and remove the dc from the replication
+
+	- Use 'nodetool removenode' command to remove all of that DC's nodes
+
+	- Use 'nodetool status' command to verify the DC was removed
+
+
+
+
+7. Compaction Strategy
+	- What is the default Compaction Strategy?
+		-> STCS - Size Tiered Compaction Strategy
+
+	- What is the best Compaction Strategy for a Read-mostly workload, with a few amount of updates?
+		-> LCS - Leveled Compaction Strategy
+	- What is the best Compaction Strategy for a write-heavy use case?
+		-> STCS - Size Tiered Compaction Strategy
+
+	- What is the best Compaction Strategy for Time Series use case?
+		-> TWCS - Time-Window Compaction Strategy
+		NOTE: Time-Window Compaction Strategy will behave badly for workloads with both writes and deletes happening to the same partition in different time windows
+
+	https://opensource.docs.scylladb.com/stable/architecture/compaction/compaction-strategies.html#id1
+
+
+8. Repair & Tombstones
+	- ScyllaDB Repair: is a process that runs in the background and synchronizes the data between nodes so that eventually, all the replicas hold the same data. Data stored on nodes can become inconsistent with other replicas over time, which is why repairs are a necessary part of database maintenance. Using ScyllaDB repair makes data on the node consistent with the other nodes in the cluster.
+		nodetool repair -pr
+
+		NOTE: If I happen to read all of my data with ConsistencyLevel=All, then a later repair is not needed ?
+			=> TRUE
+			On read operations, ScyllaDB runs a process called read repair, to ensure that replicas are updated with the most recently updated data. Such repairs during the read path run automatically, asynchronously, and in the background
+
+	- Tombstones: Data written to ScyllaDB gets persisted to SSTables. Since SSTables are immutable, the data can’t actually be removed when a delete is performed, instead, a marker (also called a “tombstone”) is written to indicate the value’s new status. When compaction occurs, the data will be expunged completely and the corresponding disk space recovered.
+
+
+
+9. ScyllaDB Manager,
+	- ScyllaDB Manager is a centralized cluster administration and recurrent tasks automation tool. It can be used to schedule tasks such as repairs and backups.
+
+
+10. Security Authentication
+	- Authentication is the process where login accounts and their passwords are verified and the user is allowed access into the database. 
+	- Authentication is done internally within ScyllaDB and is not done with a third party. 
+	- Users and passwords are created with roles using a GRANT statement. 
+	- This procedure enables authentication on the ScyllaDB servers. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

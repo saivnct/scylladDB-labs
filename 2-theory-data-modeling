@@ -1,0 +1,385 @@
+1. Primary Key
+	- A Primary Key is defined within a table.  We can define the Primary Key to include more than one column, in which case it is called a Composite (or Compound) key. 
+	- All tables must include a definition for a Primary Key
+
+		CREATE TABLE heartrate_v1 (
+		   pet_chip_id uuid,
+		   time timestamp,
+		   heart_rate int,
+		   PRIMARY KEY (pet_chip_id)
+		);
+
+		CREATE TABLE heartrate_v2 (
+		   pet_chip_id uuid,
+		   time timestamp,
+		   heart_rate int,
+		   PRIMARY KEY (pet_chip_id, time)
+		);
+
+	- A Primary Key is composed of 2 parts:
+		- The Partition Key is responsible for data distribution across the nodes. 
+			It determines which node will store a given row. 
+			It can be one or more columns.
+		- The Clustering Key is responsible for sorting the rows within the partition. 
+			It can be zero or more columns.
+			If there is more than one column in the Clustering Key, the order of these columns defines the clustering order. 
+			For a given partition, all the rows are physically ordered inside ScyllaDB by the clustering order. This order determines what select query you can efficiently run on this partition.
+
+			By default, sorting is based on the natural (ASC) order of the clustering columns. To define sort order:
+
+				CREATE TABLE heartrate_v5 (
+				   pet_chip_id uuid,
+				   time timestamp,
+				   heart_rate int,
+				   PRIMARY KEY (pet_chip_id, time)
+				   )WITH CLUSTERING ORDER BY (time DESC);
+
+
+
+2. Common Data Types and Collections
+	- Common Data Types:
+		- Text: a UTF8 encoded string (same as varchar)
+		- Int:  a 32-bit signed integer
+		- UUID: a universal unique identifier, generated via uuid(), for example 123e4567-e89b-12d3-a456-426655440000
+		- TIMEUUID: a version 1 UUID, generally used as a “conflict-free” timestamp, generated using now()
+		- TIMESTAMP: A timestamp (date and time) with millisecond precision, stored as a 64-bit integer. Displayed in cqlsh as yyyy-mm-dd HH:mm:ssZ
+		NOTE: https://docs.scylladb.com/stable/cql/types.html
+	- Collections: 
+		- Maps
+			CREATE TABLE pets_v1 (
+			    pet_chip_id text PRIMARY KEY,
+			    pet_name text,
+			    favorite_things map<text, text> // A map of text keys, and text values
+			);	
+
+			INSERT INTO pets_v1 (pet_chip_id, pet_name, favorite_things) VALUES ('123e4567-e89b-12d3-a456-426655440b23', 'Rocky', { 'food' : 'Turkey', 'toy' : 'Tennis Ball'});
+
+		- Sets
+			CREATE TABLE pets_v2 (
+			    pet_name text PRIMARY KEY,
+			    address text,
+			    vaccinations set<text> 
+			);
+
+			INSERT INTO pets_v2 (pet_name, address, vaccinations) VALUES ('Rocky', '11 Columbia ave, New York NY', { 'Heartworm', 'Canine Hepatitis' });
+
+		- Lists
+			CREATE TABLE pets_v3 (
+			    pet_name text PRIMARY KEY,
+			    address text,
+			    vaccinations list<text>
+			);
+
+			INSERT INTO pets_v3 (pet_name, address, vaccinations) VALUES ('Rocky', '11 Columbia ave, New York NY',  ['Heartworm', 'Canine Hepatitis', 'Heartworm']);
+
+
+3. Expiring Data with TTL (Time to Live)
+	- ScyllaDB (as well as Cassandra) provides the functionality to automatically delete expired data according to TTL (Time to Live)
+	- The TTL can be set when defining a Table or when using the INSERT and UPDATE  queries
+	- We can define TTL on an entire Table, on a column, we also can reset TTL
+	- TTL is measured in seconds. If the field is not updated within the TTL, it is deleted.
+	- By default, the TTL value is null, which means that the data will not expire. 
+
+
+		CREATE TABLE heartrate (
+		    pet_chip_id  uuid,
+		    name text,
+		    heart_rate int,
+		    PRIMARY KEY (pet_chip_id));
+
+		INSERT INTO heartrate(pet_chip_id, name, heart_rate) VALUES (c63e71f0-936e-11ea-bb37-0242ac130002, 'Rocky', 87) USING TTL 30;
+
+		UPDATE heartrate USING TTL 600 SET heart_rate = 110 WHERE pet_chip_id = 123e4567-e89b-12d3-a456-426655440b23;
+
+
+		CREATE TABLE heartrate_ttl (
+		    pet_chip_id  uuid,
+		    name text,
+		    heart_rate int,
+		    PRIMARY KEY (pet_chip_id))
+		WITH default_time_to_live = 500;
+	
+	- To remove the TTL value on a given column, set it to 0.
+
+		INSERT INTO heartrate(pet_chip_id, name, heart_rate) VALUES (c63e71f0-936e-11ea-bb37-0242ac130002, 'Rocky', 117) USING TTL 400;
+
+		UPDATE heartrate USING TTL 0 SET heart_rate = 150 WHERE pet_chip_id = c63e71f0-936e-11ea-bb37-0242ac130002;
+
+		SELECT name, heart_rate, TTL(name) as name_ttl, TTL(heart_rate) as heart_rate_ttl FROM heartrate WHERE pet_chip_id = c63e71f0-936e-11ea-bb37-0242ac130002;
+
+
+
+4. Counters
+	- Counters are a 64-bit signed integer data type (column) that only allows its value to be incremented, decremented, read or deleted. 
+	- Updates to counters are atomic, making them perfect for counting and avoiding the issue of possible concurrent updates on the same value.
+	- Counters can only be defined in a dedicated table that includes:
+		- The primary key (can be compound)
+		- The counter column
+
+
+		CREATE TABLE pet_type_count (pet_type  text PRIMARY KEY, pet_counter counter);
+
+		UPDATE pet_type_count SET pet_counter = pet_counter + 6 WHERE pet_type = 'dog';
+
+
+5. User Defined Types (UDT)
+	- User-defined types allow the user to define more complex data structures and attach multiple data fields each with a name and type, to a single column
+	- The fields used to define the UDT can be of any valid type, including collections and other UDTs.
+	- A UDT must be frozen – meaning you cannot update individual components of the UDT value. The whole value must be overwritten.
+
+		CREATE TYPE phone (
+		    country_code int,
+		    number text,
+		);
+
+		CREATE TYPE address (
+		   street text,
+		   city text,
+		   zip text,
+		   phones map<text, frozen<phone>>
+		);
+
+		CREATE TABLE pets_v4 (
+		  name text PRIMARY KEY,
+		  addresses map<text, frozen<address>>
+		);
+
+
+		INSERT INTO pets_v4 (name, addresses) 
+               VALUES ('Rocky', {
+                  'home' : {
+		                   street: '1600 Pennsylvania Ave NW',
+		                   city: 'Washington',
+		                   zip: '20500',
+		                   phones: { 
+		                   				'cell' : { country_code: 1, number: '202 456-1111' },
+		                             	'landline' : { country_code: 1, number: '202 456-1234' } 
+		                            }
+                        },
+                   'work' : {
+                             street: '1600 Pennsylvania Ave NW',
+                             city: 'Washington',
+                             zip: '20500',
+                             phones: { 'fax' : { country_code: 1, number: '202 5444' } }
+                            }
+               });
+
+
+6. Denormalization, Materialized Views, Secondary Indexes
+	- In ScyllaDB (and Apache Cassandra), data is divided into partitions, rows, and values, which can be identified by a partition key => Sometimes the application needs to find a value by the value of another column:
+		- Method 1 - Denormalization: means creating a new table with duplicate data to answer specific queries
+		- Method 2 - Indexing: There are three indexing options available in ScyllaDB: Materialized Views, Global Secondary Indexes, and Local Secondary Indexes
+
+
+7. Materialized Views
+	- Materialized Views (MV) are a global index. When a new MV is declared, a new table is created and is distributed to the different nodes using the standard table distribution mechanisms.
+	- The new MV table can have a different primary key from the base table, allowing for faster searches on a different set of columns. 
+	- Once created, the MV table is updated automatically every time the base table is updated => This update is only triggered when the base table gets updated, and it is not possible to directly update the MV table individually
+
+	- In the write path whenever you write a new record to the base table, ScyllaDB will automatically create a record in the corresponding view.
+	- On the read path, you should query your view directly and reads on the base table will not touch the views. So there is no implicit joining.
+	- Some common use cases for MV are Indexing with denormalization, different sort orders, and filtering (pre-computed queries).
+
+	NOTE:
+	- A primary key of MV must contain all columns from the PK of the base table
+	- A PK of MV can contain at most 1 other column
+
+	Ex:
+
+		CREATE TABLE buildings (
+		    name text,
+		    city text,
+		    built_year smallint,
+		    height_meters smallint,
+		    PRIMARY KEY (name)
+		);
+
+
+		CREATE MATERIALIZED VIEW building_by_city AS
+		 SELECT * FROM buildings
+		 WHERE city IS NOT NULL
+		 PRIMARY KEY(city, name);
+
+		 =>The “WHERE city IS NOT NULL“ filter in the snippet above ensures that if a building includes a null value for the city, it will not be added to the view table because doing so would be illegal (a key component either partition or clustering key cannot be null). Adding this filter is mandatory. If you don’t, you will not be able to create the Materialized View
+
+
+	If we’re only interested in some of the columns from the original table:
+	 	CREATE MATERIALIZED VIEW building_by_city2 AS
+		 SELECT height_meters FROM buildings
+		 WHERE city IS NOT NULL 
+		 PRIMARY KEY(city, name);
+
+
+	 NOTE: user is not allowed to modify a view directly!!!!
+	 	DELETE FROM building_by_city WHERE city='Taipei'; => InvalidRequest
+
+
+
+8. Global Secondary Indexes (also called “Secondary Indexes”) 
+	- Secondary indexes are created for one main purpose: to allow querying by a column that is not a key. These indexes are implemented on top of materialized views.
+	- Rather than creating an index on the entire partition key, this index is created on specific columns. 
+	- Each Secondary Index indexes one specific column. 
+	=> Updates therefore can be more efficient with Secondary Indexes than with Materialized Views because only changes to the primary key and indexed column cause an update in the Secondary Index view
+
+	=> For Querying: there are two subqueries involved 
+		– first we fetch base primary keys from the underlying materialized view, and then we use them to query the base table directly
+
+	CREATE TABLE restaurant_chain.menus (
+		city text,
+		name text,
+		dish_type text,
+		price float,
+		PRIMARY KEY (city, name));
+
+	CREATE INDEX ON menus(dish_type);
+
+9. Local Secondary Indexes 
+	- Local Secondary Indexes  are an enhancement to Global Secondary Indexes, which allow ScyllaDB to optimize workloads where the partition key of the base table and the index are the same key.
+	- When using a Token Aware Driver, the same node is likely the coordinator, and the query does not require any inter-node communication.
+
+	CREATE TABLE restaurant_chain.menus (
+		city text,
+		name text,
+		dish_type text,
+		price float,
+		PRIMARY KEY (city, name));
+
+	CREATE INDEX ON menus((city),dish_type);
+
+
+
+10. Filtering
+	- Sometimes we want to be able to query by different columns, but we’re not interested in creating secondary indexes 
+		=> Filtering is one more way of allowing such queries. 
+		The mechanism is really simple – the coordinator will fetch *all* of the results specified by the key restrictions, and then filter out rows that do not match the rest of the restrictions.
+		=> Filtering can be very performance-heavy
+	- Despite the performance impact, filtering isn’t always that bad. On the contrary, it’s often very useful and concise => It’s important to know when to use it.		
+
+	- The magic metrics for filtering is "selectivity":
+		- High selectivity means that we’re interested in only a small fraction of all the rows
+		- Low selectivity means that we’re interested in large fraction of all the rows
+
+		=> Low selectivity queries are much better candidates for filtering. The logic is simple – if we need to fetch the majority of the rows anyway, filtering some of them later will not be costly.
+		=> Highly selective queries are, contrarily, not great for filtering – if we were to fetch 10 million rows from our replicas and use all this disk and network I/O just to drop all of them but one – that makes the query very inefficient
+
+
+
+NOTE:
+	- Filtering is by far the cheapest option when it comes to storage, as it consumes 0 additional bytes. It’s also the simplest one to use, as it requires no DDL management like creating an index. 
+	- Then, we should consider how selective will our queries be. If we expect to fetch the majority of the rows often, filtering is most likely still the best alternative. Otherwise, indexing should be considered. 
+	- If our queries tend to ask for a single partition, then that’s the target use case for local indexes. Otherwise, if queries are usually multi-partition, global indexes may be the way to go
+
+
+
+QUERY NOTE:
+ - can we query partition key with >, < , >=, <= ???
+ 	=> Only EQ and IN relation are supported on the partition key
+ 	
+ 	CREATE TABLE buildings (
+	    name text,
+	    city text,
+	    built_year smallint,
+	    height_meters smallint,
+	    PRIMARY KEY (built_year)
+	);
+
+		select * from buildings where built_year = 2004;
+		select * from buildings where built_year in (2004,1999);
+			=> OK
+
+		select * from buildings where built_year > 2004;
+			=> FAILED
+
+ 
+ - can we query cluster key with >, < , >=, <= ???
+ 	=> OK, but must include partition key in query
+
+ 	CREATE TABLE buildings (
+	    name text,
+	    city text,
+	    built_year smallint,
+	    height_meters smallint,
+	    PRIMARY KEY (name, built_year)
+	);
+
+	 	select * from buildings where name = 'Burj Khalifa' and built_year < 1000;
+	 		=> OK, support for cluster key type String, Number, DateTime, ....
+
+	 	select * from buildings where built_year > 1000;
+	 	select * from buildings where built_year = 1000;
+	 		=> NOT OK, must "ALLOW FILTERING" => act as normal columns
+ 
+
+ - can we query secondary index with >, < , >=, <= ???
+ 	=> Only support EQ
+
+ 	CREATE TABLE buildings (
+    	name text,
+	    city text,
+	    built_year smallint,
+	    height_meters smallint,
+	    PRIMARY KEY (name)
+	);
+
+ 	CREATE INDEX ON buildings(built_year);
+
+ 	select * from buildings where built_year = 1930;
+ 		=> OK
+
+ 	select * from buildings where built_year > 1930;
+ 		=> NOT OK, must "ALLOW FILTERING" => act as normal columns
+
+ 	select * from buildings where built_year = 1930 and height_meters > 283
+ 		=> NOT OK, must "ALLOW FILTERING"
+
+	select * from buildings where built_year in (2010, 1930);
+		=> NOT OK, must "ALLOW FILTERING"
+
+
+	INSERT INTO buildings (name, city, built_year, height_meters)
+      VALUES ('Burj Khalifa', 'Dubai', 2010, 828);
+	INSERT INTO buildings (name, city, built_year, height_meters)
+	      VALUES ('Shanghai World Financial Center', 'Shanghai', 2008, 487);
+	INSERT INTO buildings (name, city, built_year, height_meters)
+	      VALUES ('Taipei 101', 'Taipei', 2004, 449);
+	INSERT INTO buildings (name, city, built_year, height_meters)
+	      VALUES ('Sears Tower', 'Chicago', 1974, 442);
+	INSERT INTO buildings (name, city, built_year, height_meters)
+	      VALUES ('World Trade Center', 'New York City', 1972, 417);
+	INSERT INTO buildings (name, city, built_year, height_meters)
+	      VALUES ('Empire State Building', 'New York City', 1931, 381);
+	INSERT INTO buildings (name, city, built_year, height_meters)
+	      VALUES ('Chrysler Building', 'New York City', 1930, 283);
+	INSERT INTO buildings (name, city, built_year, height_meters)
+	      VALUES ('Chrysler Building 2', 'New York City', 1930, 293);   
+
+
+
+11. Prepared Statements
+	- A prepared statement is a query that is parsed by ScyllaDB and then saved for later use. 
+	- One of the valuable benefits is that you can continue to reuse that query and modify variables in the query to match variables
+	- When asked to prepare a CQL statement, a client library will send a CQL statement to ScyllaDB. ScyllaDB will then create a unique fingerprint for that CQL statement by MD5 hashing the CQL statement. ScyllaDB will use this hash to check its query cache to see if it has already cached that CQL statement. If ScyllaDB had seen that CQL statement, it will send back a reference to that cached CQL statement. If ScyllaDB does not have that unique query hash in its cache, it will then proceed to parse the query and insert the parsed output into its cache.The client will then be able to send an execute request specifying the statement id and providing the (bound) variables, as we will see next.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+

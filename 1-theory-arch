@@ -120,20 +120,6 @@
 		- The final resulting SSTable is never compacted with other time-windows SSTables.
 		=> With this explanation, if the time window were for one day, at the end of the day, the SSTables accumulated for that day only would be compacted into one SSTable.
 
-		
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
