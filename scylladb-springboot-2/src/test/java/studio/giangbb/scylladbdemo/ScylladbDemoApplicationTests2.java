@@ -1,30 +1,27 @@
 package studio.giangbb.scylladbdemo;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.SpringBootTest;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.cassandra.core.CassandraAdminTemplate;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.data.cassandra.core.mapping.CassandraMappingContext;
-import org.springframework.data.cassandra.core.query.Query;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.SimplePropertyHandler;
 import studio.giangbb.scylladbdemo.model.Car;
 import studio.giangbb.scylladbdemo.model.UserV2;
 import studio.giangbb.scylladbdemo.model.UserV3;
 import studio.giangbb.scylladbdemo.repository.CarRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.data.cassandra.core.query.Criteria.where;
-import static org.springframework.data.cassandra.core.query.CriteriaExtensionsKt.and;
 import static org.springframework.data.cassandra.core.query.Query.query;
 
 @SpringBootTest
@@ -51,7 +48,8 @@ class ScylladbDemoApplicationTests2 {
 	@Test
 	void getEntities(){
 		mappingContext.getTableEntities().forEach(x -> {
-			log.info("table: {}", x.getTableName());
+			log.info("table: {}, class: {}", x.getTableName(), x.getType().getName());
+
 
 			x.doWithProperties(new SimplePropertyHandler() {
 				@Override
