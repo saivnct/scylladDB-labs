@@ -25,7 +25,7 @@ In our project, we have developed a demo application using Spring Boot, a popula
 
 
 
-# <a href="Guide-to-Scylla-no-memes.pdfGuide-to-Scylla-no-memes.pdf">Click Here "Guide to ScyllaDB"</a>
+# <a href="Guide-to-Scylla-no-memes.pdf">Click Here "Guide to ScyllaDB"</a>
 
 
 # Basic concepts
