@@ -1,3 +1,5 @@
+CQL: Cassandra Query Language
+
 1. Primary Key
 	- A Primary Key is defined within a table.  We can define the Primary Key to include more than one column, in which case it is called a Composite (or Compound) key. 
 	- All tables must include a definition for a Primary Key

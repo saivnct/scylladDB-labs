@@ -23,7 +23,12 @@ In our project, we have developed a demo application using Spring Boot, a popula
 
 ## Located at scylladb-springboot folder
 
-# Theory
+
+
+# <a href="Guide-to-Scylla-no-memes.pdfGuide-to-Scylla-no-memes.pdf">Click Here "Guide to ScyllaDB"</a>
+
+
+# Basic concepts
 
 1. Cluster:
 
