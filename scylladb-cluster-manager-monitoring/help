@@ -26,7 +26,7 @@
 		netstat -nltpu
 
 		nc -vz localhost 9042
-		nc -vz 172.19.0.2 9042
+		nc -vz 172.28.0.2 9042
 		nc -vz scylla-node1 9042
 
 		nc -vz scylla-manager-db 9042
@@ -46,8 +46,9 @@
 		docker-compose exec scylla-manager sctool cluster add --name giangbbCluster --host=scylla-node1 --auth-token=token
 
 	- Verify:
-		docker-compose exec scylla-manager  sctool status -c giangbbCluster
-		docker-compose exec scylla-manager  sctool tasks -c giangbbCluster
+		docker-compose exec scylla-manager sctool status -c giangbbCluster
+		docker-compose exec scylla-manager sctool tasks -c giangbbCluster
+		docker-compose exec scylla-manager sctool cluster list
 
 	- Create a Bucket for Backups in MinIO
 		- to create backups with Scylla Manager using MinIO as a target you need to first create a “bucket” directory to use as the backup target.
@@ -66,34 +67,23 @@
 	NOTE: need to update bash to version 4
 	brew install bash    
 
-
-
-	- Extract the IP address of ScyllaDB and Manager for the next step
-
-		docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' scylla-node1
-			172.19.0.3
-
-		docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' scylla-manager
-			172.19.0.5
-
 	- Rename the file prometheus/scylla_servers.example.yml to prometheus/scylla_servers.yml and edit it according to your scylla-node1's IP addresses
 
 	- Rename the file prometheus/scylla_manager_servers.example.yml to prometheus/scylla_manager_servers.yml and modify it according to your scylla-manager's IP addresses
 
+a. using start-all.sh:
 
 	- Generate the dashboards:
-
 		./generate-dashboards.sh -F -v 5.2
 
 	- Start the stack. Replace manager_public below with your docker network.
-		./start-all.sh -v 5.2 -M 3.2 -D "--net=scylla-network"
+		./start-all.sh -v 5.2 -M 3.2
 
+b. using docker compose:
+	./make-compose.sh -v 5.2 -M 3.2
 
-
-
-
-
-
+	docker compose up
+	http://localhost:3000
 
 
 

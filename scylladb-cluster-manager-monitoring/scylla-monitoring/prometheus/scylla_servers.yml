@@ -1,8 +1,0 @@
-# List Scylla end points
-
-# An example with a single cluster and two DC
-- targets:
-       - 172.19.0.3:9180
-  labels:
-       cluster: cluster1
-

@@ -4,6 +4,8 @@ services:
   scylla-manager:
     container_name: scylla-manager
     image: scylladb/scylla-manager:3.2.5
+    ports:
+      - 5090:5090
     networks:
       - scylla-network
     depends_on:
@@ -26,6 +28,7 @@ services:
     image: scylladb/scylla-with-agent
     ports:
       - 9042:9042
+      - 9180:9180
     restart: always
     # command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
     command: --smp 1 --memory 1G --overprovisioned 1 --api-address 0.0.0.0
