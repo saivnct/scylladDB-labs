@@ -58,9 +58,9 @@
 
 
 2. Setup ScyllaDB Monitoring
-	git clone https://github.com/scylladb/scylla-monitoring.git
-	cd scylla-monitoring
-	git checkout branch-4.6
+	wget https://github.com/scylladb/scylla-monitoring/archive/scylla-monitoring-4.6.1.tar.gz
+	tar -xvf scylla-monitoring-4.6.1.tar.gz
+	cd scylla-monitoring-scylla-monitoring-4.6.1
 	
 	bash --version
 
