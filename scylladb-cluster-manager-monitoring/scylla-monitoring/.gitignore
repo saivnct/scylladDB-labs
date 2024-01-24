@@ -1,0 +1,14 @@
+docs/_build/
+docs/venv/
+*.swp
+*.pyc
+docs/bin/
+docs/include/
+docs/lib/
+docs/lib64
+docs/pip-selfcheck.json
+docs/.Python
+docs/poetry.lock
+grafana/build/
+CURRENT_VERSION.sh
+

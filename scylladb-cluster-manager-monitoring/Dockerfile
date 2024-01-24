@@ -1,4 +1,4 @@
-FROM scylladb/scylla-manager-agent:2.6.3 as agent
+FROM scylladb/scylla-manager-agent:3.2.5 as agent
 FROM scylladb/scylla:5.2
 
 COPY --from=agent /usr/bin/scylla-manager-agent /usr/bin/

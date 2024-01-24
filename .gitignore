@@ -13,6 +13,8 @@
 *.iml
 *.ipr
 
+.DS_Store
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -25,3 +27,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+/scylladb-cluster-manager-monitoring/minio_data/
+/scylladb-cluster-manager-monitoring/scylla_data_node1/
+/scylladb-cluster-manager-monitoring/scylla_manager_db_data/
