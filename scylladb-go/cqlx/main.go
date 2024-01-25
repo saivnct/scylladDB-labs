@@ -36,17 +36,39 @@ func main() {
 
 	defer session.Close()
 
-	selectQuery(session, logger)
+	selectAllQuery(session, logger)
 	insertQuery(session, "Mike", "Tyson", "12345 Foo Lane", "http://www.facebook.com/mtyson", logger)
 	insertQuery(session, "Alex", "Jones", "56789 Hickory St", "http://www.facebook.com/ajones", logger)
-	selectQuery(session, logger)
+	selectOneQuery(session, "Mike", "Tyson", logger)
+	selectAllQuery(session, logger)
 	deleteQuery(session, "Mike", "Tyson", logger)
-	selectQuery(session, logger)
+	selectAllQuery(session, logger)
 	deleteQuery(session, "Alex", "Jones", logger)
-	selectQuery(session, logger)
+	selectAllQuery(session, logger)
 }
 
-func selectQuery(session gocqlx.Session, logger *zap.Logger) {
+func selectOneQuery(session gocqlx.Session, firstName string, lastName string, logger *zap.Logger) {
+	logger.Info("Displaying One Results:")
+	r := Record{
+		FirstName: firstName,
+		LastName:  lastName,
+	}
+	//C1
+	//err := mutantTable.GetQuery(session).BindStruct(r).GetRelease(&r)
+	//if err != nil {
+	//	logger.Error("select catalog.mutant_data", zap.Error(err))
+	//}
+
+	//C2
+	q := session.Query(mutantTable.Get()).BindStruct(r)
+	if err := q.GetRelease(&r); err != nil {
+		logger.Error("select catalog.mutant_data", zap.Error(err))
+	}
+
+	logger.Info("\t" + r.FirstName + " " + r.LastName + ", " + r.Address + ", " + r.PictureLocation)
+}
+
+func selectAllQuery(session gocqlx.Session, logger *zap.Logger) {
 	logger.Info("Displaying Results:")
 	var rs []Record
 
