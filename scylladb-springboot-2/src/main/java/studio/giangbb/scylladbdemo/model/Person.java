@@ -3,6 +3,7 @@ package studio.giangbb.scylladbdemo.model;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.cassandra.core.mapping.Column;
+import org.springframework.data.cassandra.core.mapping.Indexed;
 import org.springframework.data.cassandra.core.mapping.PrimaryKey;
 import org.springframework.data.cassandra.core.mapping.Table;
 import studio.giangbb.scylladbdemo.common.utils.DateUtil;
@@ -44,6 +45,7 @@ public class Person {
 
     private List<String> addresses;
 
+    @Indexed
     @Column("email")
     private String email;
 

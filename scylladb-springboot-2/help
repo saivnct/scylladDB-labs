@@ -1,0 +1,16 @@
+cqlsh
+CREATE KEYSPACE springdemo WITH replication = {'class': 'NetworkTopologyStrategy', 'replication_factor': '1'};
+DESCRIBE KEYSPACE
+DESCRIBE TABLES
+
+
+java:
+run scylla-springboot2 test ScylladbDemoApplicationTests3
+
+
+DESCRIBE TYPES;
+DESCRIBE TYPE favoriteplace;
+
+DESCRIBE INDEX person_email_idx
+
+select * from springdemo.schema_migration;

@@ -1,1 +1,0 @@
-ALTER TYPE favoriteplace add rating int;

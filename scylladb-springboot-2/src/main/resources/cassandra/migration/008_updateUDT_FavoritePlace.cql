@@ -1,0 +1,1 @@
+ALTER TYPE favoriteplace add population int;

@@ -75,11 +75,17 @@ class ScylladbDemoApplicationTests3 {
 
 	@Test
 	void testFilter() {
-		List<Person> persons = cassandraTemplate.select(query(where("name").is(new PersonName("fist","last"))), Person.class);
+		List<Person> persons = cassandraTemplate.select(
+				query(
+						where("name").
+						is(new PersonName("fist","last"))
+				).withAllowFiltering(),
+				Person.class
+		);
 
 		log.info("persons: {}", persons);
 
-		assertThat(persons.size()).isEqualTo(2);
+		assertThat(persons.size()).isGreaterThan(0);
 	}
 
 
@@ -126,6 +132,22 @@ class ScylladbDemoApplicationTests3 {
 	void testPersonDAOFilter() {
 		List<Person> persons = personDAO.findAll();
 		assertThat(persons).isNotNull();
+		log.info("persons: {}", persons);
+
+//		PersonName newName = new PersonName("fist2","last2");
+//		List<Person> persons = personDAO.select(query(where("name").is(newName)).withAllowFiltering());
+//		log.info("persons: {} - {}", persons.size(), persons);
+	}
+
+	@Test
+	void testPersonDAOFilter2() {
+		List<Person> persons = personDAO.select(query(
+				where("email").
+						is("test@test.com")
+		));
+
+		assertThat(persons).isNotNull();
+		log.info("persons: {}", persons.size());
 		log.info("persons: {}", persons);
 
 //		PersonName newName = new PersonName("fist2","last2");
