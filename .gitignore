@@ -32,3 +32,4 @@ build/
 /scylladb-cluster-manager-monitoring/minio_data/
 /scylladb-cluster-manager-monitoring/scylla_data_node1/
 /scylladb-cluster-manager-monitoring/scylla_manager_db_data/
+/scylladb-cluster-manager-monitoring/scylla-monitoring-scylla-monitoring-4.6.1/loki-wall/

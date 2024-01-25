@@ -82,7 +82,10 @@ a. using start-all.sh:
 b. using docker compose:
 	./make-compose.sh -v 5.2 -M 3.2
 
-	docker compose up
+	- edit generated file: docker-compose.yml
+		-> set network the same with network of scylladb, manager
+
+	docker compose up -d 
 	http://localhost:3000
 
 

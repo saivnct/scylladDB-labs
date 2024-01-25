@@ -2,6 +2,8 @@ services:
   alertmanager:
     container_name: aalert
     image: "prom/alertmanager:${ALERT_MANAGER_VERSION}"
+    networks:
+      - scylla-network
     #GENERAL_DOCER_CONFIG
     ports:
     - ${BIND_ADDRESS}${ALERTMANAGER_PORT}:9093
@@ -23,6 +25,8 @@ services:
     #GRAFANA_ENV
     #GENERAL_DOCER_CONFIG
     image: grafana/grafana:${GRAFANA_VERSION}
+    networks:
+      - scylla-network
     ports:
     - ${BIND_ADDRESS}${GRAFANA_PORT}:3000
     user: 1000:1000
@@ -37,6 +41,8 @@ services:
     - --config.file=/mnt/config/loki-config.yaml
     container_name: loki
     image: grafana/loki:${LOKI_VERSION}
+    networks:
+      - scylla-network
     #GENERAL_DOCER_CONFIG
     #LOKi_USER_PERMISSIONS
     ports:
@@ -52,6 +58,8 @@ services:
     #PROMETHEUS_USER_PERMISSIONS
     container_name: aprom
     image: prom/prometheus:${PROMETHEUS_VERSION}
+    networks:
+      - scylla-network
     ports:
     - ${BIND_ADDRESS}${PROMETHEUS_PORT}:9090
     volumes:
@@ -69,9 +77,17 @@ services:
     container_name: promtail
     #GENERAL_DOCER_CONFIG
     image: grafana/promtail:${LOKI_VERSION}
+    networks:
+      - scylla-network
     ports:
     - ${BIND_ADDRESS}1514:1514
     - ${BIND_ADDRESS}9080:9080
     volumes:
     - ./loki/promtail/promtail_config.compose.yml:/etc/promtail/config.yml
 version: '3'
+
+networks:
+  scylla-network:
+    name: scylla
+
+
