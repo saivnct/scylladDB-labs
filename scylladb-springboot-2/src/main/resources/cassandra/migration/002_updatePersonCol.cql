@@ -1,1 +1,1 @@
-ALTER TABLE person ADD my_col TEXT;
+-- ALTER TABLE person ADD my_col TEXT;

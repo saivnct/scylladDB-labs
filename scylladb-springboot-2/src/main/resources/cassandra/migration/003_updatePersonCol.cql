@@ -1,1 +1,1 @@
-ALTER TABLE person DROP my_col;
+-- ALTER TABLE person DROP my_col;

@@ -1,0 +1,123 @@
+CREATE KEYSPACE architecture 
+  WITH replication = 
+  {'class': 'NetworkTopologyStrategy', 'replication_factor': '1'}  
+  AND durable_writes = true;
+
+
+
+USE architecture;
+
+
+CREATE TABLE buildings (
+    name text,
+    city text,
+    built_year smallint,
+    height_meters smallint,
+    PRIMARY KEY (name)
+);
+
+
+INSERT INTO buildings (name, city, built_year, height_meters)
+      VALUES ('Burj Khalifa', 'Dubai', 2010, 828);
+INSERT INTO buildings (name, city, built_year, height_meters)
+      VALUES ('Shanghai World Financial Center', 'Shanghai', 2008, 487);
+INSERT INTO buildings (name, city, built_year, height_meters)
+      VALUES ('Taipei 101', 'Taipei', 2004, 449);
+INSERT INTO buildings (name, city, built_year, height_meters)
+      VALUES ('Sears Tower', 'Chicago', 1974, 442);
+INSERT INTO buildings (name, city, built_year, height_meters)
+      VALUES ('World Trade Center', 'New York City', 1972, 417);
+INSERT INTO buildings (name, city, built_year, height_meters)
+      VALUES ('Empire State Building', 'New York City', 1931, 381);
+INSERT INTO buildings (name, city, built_year, height_meters)
+      VALUES ('Chrysler Building', 'New York City', 1930, 283);
+
+
+
+CREATE MATERIALIZED VIEW building_by_city AS
+SELECT * FROM buildings PRIMARY KEY(city, name);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE KEYSPACE restaurant_chain
+WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', 'replication_factor' : 1 };
+
+USE restaurant_chain;
+
+CREATE TABLE menus (
+   id int,
+   location text,
+   name text,
+   dish_type text,
+   price float,
+   PRIMARY KEY (id, location)
+);
+
+
+
+
+INSERT INTO menus (id, location, name, price, dish_type) VALUES (0, 'Reykjavik', 'hakarl', 16, 'cold Icelandic starter');
+INSERT INTO menus (id, location, name, price, dish_type) VALUES (1, 'Reykjavik', 'svid', 21, 'hot Icelandic main dish');
+INSERT INTO menus (id, location, name, price, dish_type) VALUES (2, 'Warsaw', 'sour rye soup', 7, 'Polish soup');
+INSERT INTO menus (id, location, name, price, dish_type) VALUES (3, 'Warsaw', 'sorrel soup', 5, 'Polish soup');
+INSERT INTO menus (id, location, name, price, dish_type) VALUES (4, 'Cracow', 'beef tripe soup', 6, 'Polish soup');
+INSERT INTO menus (id, location, name, price, dish_type) VALUES (5, 'Warsaw', 'pork jelly', 8, 'cold Polish starter');
+INSERT INTO menus (id, location, name, price, dish_type) VALUES (6, 'Ho Chi Minh', 'bun mam', 8, 'Vietnamese soup');
+INSERT INTO menus (id, location, name, price, dish_type) VALUES (7, 'Da Lat', 'banh mi', 5, 'Vietnamese breakfast');
+INSERT INTO menus (id, location, name, price, dish_type) VALUES (8, 'Ho Chi Minh', 'goi cuon', 6, 'Vietnamese hot starter');
+
+
+
+CREATE INDEX ON menus(dish_type);
+
+
+
+
+
+
+CREATE KEYSPACE pets_clinic WITH replication = {'class': 'NetworkTopologyStrategy', 'datacenter1': '1'}  AND durable_writes = true;
+
+USE pets_clinic;
+
+CREATE TABLE heartrate_v5 (
+    pet_chip_id uuid,
+    pet_name text,
+    heart_rate int,
+    time timestamp,
+    PRIMARY KEY (pet_chip_id, time, heart_rate)
+);
+
+INSERT INTO heartrate_v5(pet_chip_id, time, heart_rate) VALUES (123e4567-e89b-12d3-a456-426655440b23, '2019-03-04 07:01:00', 100);
+INSERT INTO heartrate_v5(pet_chip_id, time, heart_rate) VALUES (123e4567-e89b-12d3-a456-426655440b23, '2019-03-04 07:01:30', 90);
+INSERT INTO heartrate_v5(pet_chip_id, time, heart_rate) VALUES (123e4567-e89b-12d3-a456-426655440b23, '2019-03-04 07:02:00', 95);
+INSERT INTO heartrate_v5(pet_chip_id, time, heart_rate) VALUES (123e4567-e89b-12d3-a456-426655440b23, '2019-03-04 07:02:30', 96);
+INSERT INTO heartrate_v5(pet_chip_id, time, heart_rate) VALUES (123e4567-e89b-12d3-a456-426655440b23, '2019-03-04 07:03:00', 98);
+INSERT INTO heartrate_v5(pet_chip_id, time, heart_rate) VALUES (123e4567-e89b-12d3-a456-426655440b23, '2019-03-04 07:03:30', 93);
+INSERT INTO heartrate_v5(pet_chip_id, time, heart_rate) VALUES (123e4567-e89b-12d3-a456-426655440b24, '2019-03-04 07:01:00', 101);
+INSERT INTO heartrate_v5(pet_chip_id, time, heart_rate) VALUES (123e4567-e89b-12d3-a456-426655440b25, '2019-03-04 07:01:00', 102);
+INSERT INTO heartrate_v5(pet_chip_id, time, heart_rate) VALUES (123e4567-e89b-12d3-a456-426655440b26, '2019-03-04 07:01:00', 103);
+
+
+
+
+
+
+
+
+
+
+
+
+
+

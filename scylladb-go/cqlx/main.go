@@ -1,13 +1,13 @@
 package main
 
 import (
-	"giangbb.studio/scylladb/internal/log"
-	"giangbb.studio/scylladb/internal/scylla"
-	"github.com/gocql/gocql"
+	"giangbb.studio/scylladb/scylla"
+	"github.com/gookit/color"
+	"github.com/joho/godotenv"
 	"github.com/scylladb/gocqlx/v2"
 	"github.com/scylladb/gocqlx/v2/qb"
 	"github.com/scylladb/gocqlx/v2/table"
-	"go.uber.org/zap"
+	"log"
 )
 
 var mutantMetadata = table.Metadata{
@@ -25,30 +25,37 @@ type Record struct {
 }
 
 func main() {
-	logger := log.CreateLogger("info")
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	cluster := scylla.CreateCluster(gocql.LocalQuorum, "catalog", "192.168.31.41")
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal(color.Red.Sprintf("❌ Failed to get load env: %v", err))
+	}
+
+	cluster := scylla.CreateCluster()
+	log.Println(color.Green.Sprint("✅	Scylla cluster created!"))
+
 	// Wrap session on creation, gocqlx session embeds gocql.Session pointer.
 	session, err := gocqlx.WrapSession(cluster.CreateSession())
 	if err != nil {
-		logger.Fatal("unable to connect to scylla", zap.Error(err))
+		log.Fatal(color.Red.Sprintf("❌ Unable to connect to scylla: %v", err))
 	}
 
 	defer session.Close()
 
-	selectAllQuery(session, logger)
-	insertQuery(session, "Mike", "Tyson", "12345 Foo Lane", "http://www.facebook.com/mtyson", logger)
-	insertQuery(session, "Alex", "Jones", "56789 Hickory St", "http://www.facebook.com/ajones", logger)
-	selectOneQuery(session, "Mike", "Tyson", logger)
-	selectAllQuery(session, logger)
-	deleteQuery(session, "Mike", "Tyson", logger)
-	selectAllQuery(session, logger)
-	deleteQuery(session, "Alex", "Jones", logger)
-	selectAllQuery(session, logger)
+	selectAllQuery(session)
+	insertQuery(session, "Mike", "Tyson", "12345 Foo Lane", "http://www.facebook.com/mtyson")
+	insertQuery(session, "Alex", "Jones", "56789 Hickory St", "http://www.facebook.com/ajones")
+	selectOneQuery(session, "Mike", "Tyson")
+	selectAllQuery(session)
+	deleteQuery(session, "Mike", "Tyson")
+	selectAllQuery(session)
+	deleteQuery(session, "Alex", "Jones")
+	selectAllQuery(session)
 }
 
-func selectOneQuery(session gocqlx.Session, firstName string, lastName string, logger *zap.Logger) {
-	logger.Info("Displaying One Results:")
+func selectOneQuery(session gocqlx.Session, firstName string, lastName string) {
+	log.Println("Displaying One Results:")
 	r := Record{
 		FirstName: firstName,
 		LastName:  lastName,
@@ -62,29 +69,29 @@ func selectOneQuery(session gocqlx.Session, firstName string, lastName string, l
 	//C2
 	q := session.Query(mutantTable.Get()).BindStruct(r)
 	if err := q.GetRelease(&r); err != nil {
-		logger.Error("select catalog.mutant_data", zap.Error(err))
+		log.Printf("select catalog.mutant_data err %v", err)
 	}
 
-	logger.Info("\t" + r.FirstName + " " + r.LastName + ", " + r.Address + ", " + r.PictureLocation)
+	log.Println("\t" + r.FirstName + " " + r.LastName + ", " + r.Address + ", " + r.PictureLocation)
 }
 
-func selectAllQuery(session gocqlx.Session, logger *zap.Logger) {
-	logger.Info("Displaying Results:")
+func selectAllQuery(session gocqlx.Session) {
+	log.Println("Displaying Results:")
 	var rs []Record
 
 	q := qb.Select(mutantMetadata.Name).Columns(mutantMetadata.Columns...).Query(session)
 	if err := q.Select(&rs); err != nil {
-		logger.Warn("select catalog.mutant", zap.Error(err))
+		log.Printf("select catalog.mutant_data err %v", err)
 		return
 	}
 
 	for _, r := range rs {
-		logger.Info("\t" + r.FirstName + " " + r.LastName + ", " + r.Address + ", " + r.PictureLocation)
+		log.Println("\t" + r.FirstName + " " + r.LastName + ", " + r.Address + ", " + r.PictureLocation)
 	}
 }
 
-func deleteQuery(session gocqlx.Session, firstName string, lastName string, logger *zap.Logger) {
-	logger.Info("Deleting " + firstName + "......")
+func deleteQuery(session gocqlx.Session, firstName string, lastName string) {
+	log.Println("Deleting " + firstName + "......")
 	r := Record{
 		FirstName: firstName,
 		LastName:  lastName,
@@ -93,18 +100,18 @@ func deleteQuery(session gocqlx.Session, firstName string, lastName string, logg
 	//C1
 	err := session.Query(mutantTable.Delete()).BindStruct(r).ExecRelease()
 	if err != nil {
-		logger.Error("delete catalog.mutant_data", zap.Error(err))
+		log.Printf("delete catalog.mutant_data err %v", err)
 	}
 
 	//C2
 	//q := qb.Delete(mutantMetadata.Name).Where(qb.Eq("first_name"), qb.Eq("last_name")).Query(session).BindStruct(r)
 	//if err := q.ExecRelease(); err != nil {
-	//	logger.Error("delete catalog.mutant_data", zap.Error(err))
+	//	log.Printf("delete catalog.mutant_data err %v", err)
 	//}
 }
 
-func insertQuery(session gocqlx.Session, firstName, lastName, address, pictureLocation string, logger *zap.Logger) {
-	logger.Info("Inserting " + firstName + "......")
+func insertQuery(session gocqlx.Session, firstName, lastName, address, pictureLocation string) {
+	log.Println("Inserting " + firstName + "......")
 	r := Record{
 		FirstName:       firstName,
 		LastName:        lastName,
@@ -114,12 +121,12 @@ func insertQuery(session gocqlx.Session, firstName, lastName, address, pictureLo
 	//C1
 	q := session.Query(mutantTable.Insert()).BindStruct(r)
 	if err := q.ExecRelease(); err != nil {
-		logger.Error("insert catalog.mutant_data", zap.Error(err))
+		log.Printf("insert catalog.mutant_data err %v", err)
 	}
 
 	//C2
 	//q := qb.Insert(mutantMetadata.Name).Columns(mutantMetadata.Columns...).Query(session).BindStruct(r)
 	//if err := q.ExecRelease(); err != nil {
-	//	logger.Error("insert catalog.mutant_data", zap.Error(err))
+	//	log.Printf("insert catalog.mutant_data err %v", err)
 	//}
 }

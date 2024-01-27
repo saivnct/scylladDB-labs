@@ -1,1 +1,1 @@
-ALTER TYPE favoriteplace add population int;
+-- ALTER TYPE favoriteplace add population int;
