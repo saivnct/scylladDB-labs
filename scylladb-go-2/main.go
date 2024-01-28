@@ -1,6 +1,7 @@
 package main
 
 import (
+	"giangbb.studio/scylladb/dao"
 	"giangbb.studio/scylladb/scylla"
 	"github.com/gookit/color"
 	"github.com/joho/godotenv"
@@ -8,6 +9,7 @@ import (
 	"github.com/scylladb/gocqlx/v2/qb"
 	"github.com/scylladb/gocqlx/v2/table"
 	"log"
+	"os"
 )
 
 var mutantMetadata = table.Metadata{
@@ -27,31 +29,47 @@ type Record struct {
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	err := godotenv.Load("../.env")
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal(color.Red.Sprintf("❌ Failed to get load env: %v", err))
 	}
 
-	cluster := scylla.CreateCluster()
-	log.Println(color.Green.Sprint("✅	Scylla cluster created!"))
-
-	// Wrap session on creation, gocqlx session embeds gocql.Session pointer.
-	session, err := gocqlx.WrapSession(cluster.CreateSession())
+	_, sessionP, err := scylla.CreateCluster()
 	if err != nil {
 		log.Fatal(color.Red.Sprintf("❌ Unable to connect to scylla: %v", err))
 	}
+	log.Println(color.Green.Sprint("✅	Scylla cluster created!"))
+
+	session := *sessionP
+	keyspace := os.Getenv("SCYLLA_KEYSPACE")
 
 	defer session.Close()
 
-	selectAllQuery(session)
-	insertQuery(session, "Mike", "Tyson", "12345 Foo Lane", "http://www.facebook.com/mtyson")
-	insertQuery(session, "Alex", "Jones", "56789 Hickory St", "http://www.facebook.com/ajones")
-	selectOneQuery(session, "Mike", "Tyson")
-	selectAllQuery(session)
-	deleteQuery(session, "Mike", "Tyson")
-	selectAllQuery(session)
-	deleteQuery(session, "Alex", "Jones")
-	selectAllQuery(session)
+	dao.Init(session, keyspace)
+
+	//var myStructType reflect.Type = reflect.TypeOf(udt.FavoritePlace{})
+	//var myStructPtrValue reflect.Value = reflect.New(myStructType)
+	//_, ok := myStructPtrValue.Interface().(udt.BaseUDTInterface)
+	//log.Println(ok)
+
+	//log.Println("Car", dao.Car.TableMetaData)
+	//log.Println("Person", dao.Person.TableMetaData)
+
+	//cars, err := dao.Car.FindAll(session)
+	//if err != nil {
+	//	log.Fatal(color.Red.Sprintf("❌ Failed to get cars: %v", err))
+	//}
+	//log.Println("Cars", cars)
+
+	//selectAllQuery(session)
+	//insertQuery(session, "Mike", "Tyson", "12345 Foo Lane", "http://www.facebook.com/mtyson")
+	//insertQuery(session, "Alex", "Jones", "56789 Hickory St", "http://www.facebook.com/ajones")
+	//selectOneQuery(session, "Mike", "Tyson")
+	//selectAllQuery(session)
+	//deleteQuery(session, "Mike", "Tyson")
+	//selectAllQuery(session)
+	//deleteQuery(session, "Alex", "Jones")
+	//selectAllQuery(session)
 }
 
 func selectOneQuery(session gocqlx.Session, firstName string, lastName string) {

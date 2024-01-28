@@ -12,22 +12,23 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	err := godotenv.Load(".env")
+	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Fatal(color.Red.Sprintf("❌ Failed to get load env: %v", err))
 	}
 
 	cluster := scylla.CreateCluster()
-	session, err := gocql.NewSession(*cluster)
+	session, err := cluster.CreateSession()
 	if err != nil {
 		log.Fatal(color.Red.Sprintf("❌ Unable to connect to scylla: %v", err))
 	}
 	defer session.Close()
 
-	selectQuery(session)
-	insertQuery(session)
-	selectQuery2(session)
-	deleteQuery(session)
+	//selectQuery(session)
+	//insertQuery(session)
+	//selectQuery2(session)
+	//deleteQuery(session)
+	demoPagination(session)
 }
 
 func insertQuery(session *gocql.Session) {
@@ -88,5 +89,49 @@ func selectQuery2(session *gocql.Session) {
 	// scanner.Err() closes the iterator, so scanner nor iter should be used afterwards.
 	if err := scanner.Err(); err != nil {
 		log.Printf("select catalog.mutant_data err %v", err)
+	}
+}
+
+func demoPagination(session *gocql.Session) {
+	/* The example assumes the following CQL was used to setup the keyspace:
+	create table itoa(id int, description text, PRIMARY KEY(id));
+	insert into itoa (id, description) values (1, 'one');
+	insert into itoa (id, description) values (2, 'two');
+	insert into itoa (id, description) values (3, 'three');
+	insert into itoa (id, description) values (4, 'four');
+	insert into itoa (id, description) values (5, 'five');
+	insert into itoa (id, description) values (6, 'six');
+	*/
+
+	var pageState []byte
+	for {
+		// We use PageSize(2) for the sake of example, use larger values in production (default is 5000) for performance
+		// reasons.
+		iter := session.Query(`SELECT id, description FROM itoa`).PageSize(2).PageState(pageState).Iter()
+		nextPageState := iter.PageState()
+		scanner := iter.Scanner()
+		for scanner.Next() {
+			var (
+				id          string
+				description int
+			)
+			err := scanner.Scan(&id, &description)
+			if err != nil {
+				log.Printf("err %v", err)
+			}
+			log.Println(id, description)
+		}
+
+		err := scanner.Err()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Println("next page -->")
+		//fmt.Printf("next page state: %v\n", nextPageState)
+		if len(nextPageState) == 0 {
+			break
+		}
+		pageState = nextPageState
 	}
 }

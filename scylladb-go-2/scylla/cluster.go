@@ -2,6 +2,7 @@ package scylla
 
 import (
 	"github.com/gookit/color"
+	"github.com/scylladb/gocqlx/v2"
 	"log"
 	"os"
 	"strconv"
@@ -11,10 +12,9 @@ import (
 	"github.com/gocql/gocql"
 )
 
-func CreateCluster() *gocql.ClusterConfig {
+func CreateCluster() (*gocql.ClusterConfig, *gocqlx.Session, error) {
 	hoststr := os.Getenv("SCYLLA_HOSTS")
 	hosts := strings.Split(hoststr, ",")
-
 	keyspace := os.Getenv("SCYLLA_KEYSPACE")
 
 	//rf, err := strconv.Atoi(os.Getenv("SCYLLA_RF"))
@@ -24,12 +24,12 @@ func CreateCluster() *gocql.ClusterConfig {
 
 	clusterTimeout, err := strconv.Atoi(os.Getenv("SCYLLA_TIMEOUT"))
 	if err != nil {
-		log.Fatal(color.Red.Sprintf("❌ [scylla] - Failed to get load env: %v", err))
+		return nil, nil, err
 	}
 
 	numRetries, err := strconv.Atoi(os.Getenv("SCYLLA_NUM_RETRIES"))
 	if err != nil {
-		log.Fatal(color.Red.Sprintf("❌ [scylla] - Failed to get load env: %v", err))
+		return nil, nil, err
 	}
 
 	retryPolicy := &gocql.ExponentialBackoffRetryPolicy{
@@ -38,6 +38,7 @@ func CreateCluster() *gocql.ClusterConfig {
 		NumRetries: numRetries,
 	}
 	cluster := gocql.NewCluster(hosts...)
+
 	cluster.Keyspace = keyspace
 	cluster.Timeout = time.Duration(clusterTimeout) * time.Second
 	cluster.RetryPolicy = retryPolicy
@@ -52,5 +53,10 @@ func CreateCluster() *gocql.ClusterConfig {
 		cluster.PoolConfig.HostSelectionPolicy = gocql.TokenAwareHostPolicy(gocql.RoundRobinHostPolicy())
 	}
 
-	return cluster
+	session, err := gocqlx.WrapSession(cluster.CreateSession())
+	if err != nil {
+		log.Fatal(color.Red.Sprintf("❌ Unable to connect to scylla: %v", err))
+	}
+
+	return cluster, &session, nil
 }
