@@ -10,6 +10,8 @@ import (
 	"github.com/scylladb/gocqlx/v2/table"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 )
 
 var mutantMetadata = table.Metadata{
@@ -34,26 +36,50 @@ func main() {
 		log.Fatal(color.Red.Sprintf("❌ Failed to get load env: %v", err))
 	}
 
-	_, sessionP, err := scylla.CreateCluster()
+	hoststr := os.Getenv("SCYLLA_HOSTS")
+	hosts := strings.Split(hoststr, ",")
+	keyspace := os.Getenv("SCYLLA_KEYSPACE")
+
+	//rf, err := strconv.Atoi(os.Getenv("SCYLLA_RF"))
+	//if err != nil {
+	//	log.Fatal(color.Red.Sprintf("❌ [scylla] - Failed to get load env: %v", err))
+	//}
+
+	clusterTimeout, err := strconv.Atoi(os.Getenv("SCYLLA_TIMEOUT"))
+	if err != nil {
+		log.Fatal(color.Red.Sprintf("❌ Failed to get load env: %v", err))
+	}
+
+	numRetries, err := strconv.Atoi(os.Getenv("SCYLLA_NUM_RETRIES"))
+	if err != nil {
+		log.Fatal(color.Red.Sprintf("❌ Failed to get load env: %v", err))
+	}
+
+	localDC := os.Getenv("SCYLLA_LOCAL_DC")
+
+	_, sessionP, err := scylla.CreateCluster(hosts, keyspace, localDC, clusterTimeout, numRetries)
 	if err != nil {
 		log.Fatal(color.Red.Sprintf("❌ Unable to connect to scylla: %v", err))
 	}
 	log.Println(color.Green.Sprint("✅	Scylla cluster created!"))
 
 	session := *sessionP
-	keyspace := os.Getenv("SCYLLA_KEYSPACE")
 
 	defer session.Close()
 
 	dao.Init(session, keyspace)
 
-	//var myStructType reflect.Type = reflect.TypeOf(udt.FavoritePlace{})
-	//var myStructPtrValue reflect.Value = reflect.New(myStructType)
-	//_, ok := myStructPtrValue.Interface().(udt.BaseUDTInterface)
-	//log.Println(ok)
+	log.Println("------------Car----------------")
+	for _, column := range dao.Car.EntityInfo.Columns {
+		log.Println(column)
+	}
+	log.Println("Car", dao.Car.EntityInfo.TableMetaData)
 
-	//log.Println("Car", dao.Car.TableMetaData)
-	//log.Println("Person", dao.Person.TableMetaData)
+	log.Println("------------Person----------------")
+	for _, column := range dao.Person.EntityInfo.Columns {
+		log.Println(column)
+	}
+	log.Println("Person", dao.Person.EntityInfo.TableMetaData)
 
 	//cars, err := dao.Car.FindAll(session)
 	//if err != nil {
