@@ -3,6 +3,7 @@ package tuple
 type MachineTuple struct {
 	Name  string
 	Year  int
+	Anc   int
 	Brand string
 }
 

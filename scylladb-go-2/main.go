@@ -71,13 +71,15 @@ func main() {
 
 	log.Println("------------Car----------------")
 	for _, column := range dao.Car.EntityInfo.Columns {
-		log.Println(column)
+		log.Println(column.String())
+		log.Printf("%s\n\n", column.GetCqlTypeDeclareStatement())
 	}
 	log.Println("Car", dao.Car.EntityInfo.TableMetaData)
 
 	log.Println("------------Person----------------")
 	for _, column := range dao.Person.EntityInfo.Columns {
-		log.Println(column)
+		log.Println(column.String())
+		log.Printf("%s\n\n", column.GetCqlTypeDeclareStatement())
 	}
 	log.Println("Person", dao.Person.EntityInfo.TableMetaData)
 

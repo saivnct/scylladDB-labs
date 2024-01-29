@@ -17,6 +17,7 @@ type Person struct {
 	Nicknames        []string           `db:"nick_names" dbType:"set<text>"`
 	WorkingHistory   map[int]string     `dbType:"map<int, text>"`
 	WorkingDocuments []model.WorkingDoc `dbType:"list<working_document>"`
+	CitizenIdent     model.CitizenIdent `dbType:"tuple<text, timestamp, timestamp, int>"`
 	CreatedAt        time.Time          `db:"created_at" ck:"1"`
 }
 

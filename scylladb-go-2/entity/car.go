@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"giangbb.studio/scylladb/entity/tuple"
 	"giangbb.studio/scylladb/entity/udt"
 	"github.com/gocql/gocql"
 )
@@ -17,8 +18,8 @@ type Car struct {
 	Levels              []int                  `db:"levels"`
 	Distributions       map[string]int         `db:"distributions"` //country - amount
 	MatrixMap           map[string][][]float64 `db:"matrix_map"`    //country - [][]
+	Machine             tuple.MachineTuple     //not declare db:"machine" -> default db:"machine"
 	ThisIgnoreField     string                 `db:"-"`
-	ThisAlsoIgnoreField string
 	thisUnexportedField string
 }
 

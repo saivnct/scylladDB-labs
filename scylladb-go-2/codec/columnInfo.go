@@ -15,6 +15,7 @@ func (c ColumnInfo) String() string {
 }
 
 func (c ColumnInfo) GetGreateUDTStatement() (string, error) {
+	//TODO: implement
 	if cqlUDT, ok := c.Type.(gocql.UDTTypeInfo); ok {
 		return fmt.Sprintf("CREATE TYPE IF NOT EXISTS %s ( %s )", c.Name, cqlUDT.String()), nil
 	}
@@ -22,18 +23,6 @@ func (c ColumnInfo) GetGreateUDTStatement() (string, error) {
 	return "", fmt.Errorf("%s is not UDT type", c.Name)
 }
 
-func (c ColumnInfo) GetTypeStatement() (string, error) {
-	//TODO: implement
-
-	//if cqlNativeType, ok := c.Type.(gocql.NativeType); ok {
-	//
-	//} else if cqlCollectionType, ok := c.Type.(gocql.CollectionType); ok {
-	//
-	//} else if cqlUDTTypeInfo, ok := c.Type.(gocql.UDTTypeInfo); ok {
-	//
-	//} else if cqlTupleTypeInfo, ok := c.Type.(gocql.TupleTypeInfo); ok {
-	//
-	//}
-
-	return "", fmt.Errorf("%s: Unknown Type %s", c.Name, c.Type.Type().String())
+func (c ColumnInfo) GetCqlTypeDeclareStatement() string {
+	return fmt.Sprintf("%s %s", c.Name, GetCqlTypeDeclareStatement(c.Type))
 }

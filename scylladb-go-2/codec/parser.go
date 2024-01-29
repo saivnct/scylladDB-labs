@@ -176,7 +176,7 @@ func validateFieldType(fieldType reflect.Type, cqlType gocql.TypeInfo) bool {
 	}
 
 	switch cqlType.Type() {
-	case gocql.TypeUDT, gocql.TypeTuple, gocql.TypeCustom:
+	case gocql.TypeCustom, gocql.TypeUDT, gocql.TypeTuple:
 		if fieldType.Kind() != reflect.Struct {
 			return false
 		}
