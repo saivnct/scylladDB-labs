@@ -1,4 +1,4 @@
-package scylla
+package connection
 
 import (
 	"github.com/gookit/color"

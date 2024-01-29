@@ -1,6 +1,6 @@
 CREATE KEYSPACE catalog WITH REPLICATION = {'class': 'NetworkTopologyStrategy', 'replication_factor': '1'};
 use catalog;
-CREATE TABLE mutant_data ( first_name text, last_name text, address text, picture_location text, PRIMARY KEY((first_name, last_name)));
+CREATE TABLE mutant_data ( first_name text, last_name text, address text, picture_location text, PRIMARY KEY(first_name, last_name));
 
 
 insert into mutant_data ("first_name","last_name","address","picture_location") VALUES ('Bob','Loblaw','1313 Mockingbird Lane', 'http://www.facebook.com/bobloblaw');

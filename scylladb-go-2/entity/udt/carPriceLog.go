@@ -4,7 +4,7 @@ import "time"
 
 type CarPriceLog struct {
 	Price     float64   `db:"price"`
-	CreatedAt time.Time `db:"createdAt"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
 func (f CarPriceLog) UDTName() string {

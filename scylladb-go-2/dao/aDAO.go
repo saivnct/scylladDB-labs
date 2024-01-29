@@ -1,17 +1,17 @@
 package dao
 
 import (
+	"giangbb.studio/scylladb/codec"
 	"giangbb.studio/scylladb/entity"
-	"giangbb.studio/scylladb/scylla"
 	"github.com/scylladb/gocqlx/v2"
 )
 
 type DAO struct {
-	EntityInfo scylla.EntityInfo
+	EntityInfo codec.EntityInfo
 }
 
 func (d *DAO) InitDAO(session gocqlx.Session, keyspace string, m entity.BaseModelInterface) error {
-	entityInfo, err := scylla.ParseTableMetaData(m)
+	entityInfo, err := codec.ParseTableMetaData(m)
 	if err != nil {
 		return err
 	}

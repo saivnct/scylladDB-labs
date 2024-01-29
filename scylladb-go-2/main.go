@@ -1,8 +1,8 @@
 package main
 
 import (
+	"giangbb.studio/scylladb/connection"
 	"giangbb.studio/scylladb/dao"
-	"giangbb.studio/scylladb/scylla"
 	"github.com/gookit/color"
 	"github.com/joho/godotenv"
 	"github.com/scylladb/gocqlx/v2"
@@ -57,7 +57,7 @@ func main() {
 
 	localDC := os.Getenv("SCYLLA_LOCAL_DC")
 
-	_, sessionP, err := scylla.CreateCluster(hosts, keyspace, localDC, clusterTimeout, numRetries)
+	_, sessionP, err := connection.CreateCluster(hosts, keyspace, localDC, clusterTimeout, numRetries)
 	if err != nil {
 		log.Fatal(color.Red.Sprintf("❌ Unable to connect to scylla: %v", err))
 	}

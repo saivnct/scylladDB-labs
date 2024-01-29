@@ -43,6 +43,8 @@ func main() {
 
 	defer session.Close()
 
+	initDB(session)
+
 	selectAllQuery(session)
 	insertQuery(session, "Mike", "Tyson", "12345 Foo Lane", "http://www.facebook.com/mtyson")
 	insertQuery(session, "Alex", "Jones", "56789 Hickory St", "http://www.facebook.com/ajones")
@@ -52,6 +54,16 @@ func main() {
 	selectAllQuery(session)
 	deleteQuery(session, "Alex", "Jones")
 	selectAllQuery(session)
+
+	udtQuery(session)
+}
+
+func initDB(session gocqlx.Session) {
+	log.Println("initDB")
+	err := session.ExecStmt(`CREATE TABLE IF NOT EXISTS mutant_data ( first_name text, last_name text, address text, picture_location text, PRIMARY KEY(first_name, last_name))`)
+	if err != nil {
+		log.Fatal(color.Red.Sprintf("❌ Unable to create table: %v", err))
+	}
 }
 
 func selectOneQuery(session gocqlx.Session, firstName string, lastName string) {
@@ -129,4 +141,65 @@ func insertQuery(session gocqlx.Session, firstName, lastName, address, pictureLo
 	//if err := q.ExecRelease(); err != nil {
 	//	log.Printf("insert catalog.mutant_data err %v", err)
 	//}
+}
+
+type Coordinates struct {
+	gocqlx.UDT
+	X int
+	Y int
+}
+type UDTS struct {
+	K int
+	C Coordinates
+}
+
+func udtQuery(session gocqlx.Session) {
+	log.Println("udtQuery:")
+	err := session.ExecStmt(`CREATE TYPE IF NOT EXISTS coordinates(x int, y int)`)
+	if err != nil {
+		log.Fatal(color.Red.Sprintf("❌ Unable to create UDT: %v", err))
+	}
+
+	err = session.ExecStmt(`CREATE TABLE IF NOT EXISTS udts(k int PRIMARY KEY, c coordinates)`)
+	if err != nil {
+		log.Fatal(color.Red.Sprintf("❌ Unable to create table: %v", err))
+	}
+
+	var udtsMetadata = table.Metadata{
+		Name:    "udts",
+		Columns: []string{"k", "c"},
+		PartKey: []string{"k"},
+	}
+	var udtsTable = table.New(udtsMetadata)
+
+	coordinates1 := Coordinates{X: 12, Y: 34}
+	coordinates2 := Coordinates{X: 56, Y: 78}
+
+	q := session.Query(udtsTable.Insert())
+	if err := q.BindStruct(UDTS{
+		K: 1,
+		C: coordinates1,
+	}).Exec(); err != nil {
+		log.Printf("insert catalog.udts err %v", err)
+	}
+
+	if err := q.BindStruct(UDTS{
+		K: 2,
+		C: coordinates2,
+	}).ExecRelease(); err != nil {
+		log.Printf("insert catalog.udts err %v", err)
+	}
+
+	var rs []UDTS
+
+	q = qb.Select(udtsMetadata.Name).Columns(udtsMetadata.Columns...).Query(session)
+	if err := q.Select(&rs); err != nil {
+		log.Printf("select catalog.udts err %v", err)
+		return
+	}
+
+	for _, r := range rs {
+		log.Println(r.K, r.C)
+	}
+
 }

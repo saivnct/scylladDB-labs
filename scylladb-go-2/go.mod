@@ -9,6 +9,7 @@ require (
 	github.com/gookit/color v1.5.4
 	github.com/joho/godotenv v1.5.1
 	github.com/scylladb/gocqlx/v2 v2.8.0
+	gopkg.in/inf.v0 v0.9.1
 )
 
 require (
@@ -18,5 +19,4 @@ require (
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	golang.org/x/sys v0.10.0 // indirect
-	gopkg.in/inf.v0 v0.9.1 // indirect
 )
