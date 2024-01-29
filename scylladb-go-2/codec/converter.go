@@ -2,8 +2,10 @@ package codec
 
 import (
 	"fmt"
+	"giangbb.studio/scylladb/entity/tuple"
 	"giangbb.studio/scylladb/entity/udt"
 	"github.com/gocql/gocql"
+	"github.com/scylladb/go-reflectx"
 	"gopkg.in/inf.v0"
 	"math/big"
 	"reflect"
@@ -73,7 +75,6 @@ func convertToDefaultCqlType(t reflect.Type) (gocql.TypeInfo, error) {
 				typeInfo.Elem = elemTypeInfo
 				return *typeInfo, nil
 			} else if t.Implements(reflect.TypeOf((*udt.BaseUDTInterface)(nil)).Elem()) {
-
 				var tVal reflect.Value = reflect.New(t)
 				if baseUDT, ok := tVal.Elem().Interface().(udt.BaseUDTInterface); ok {
 					typeInfo := &gocql.UDTTypeInfo{
@@ -85,6 +86,20 @@ func convertToDefaultCqlType(t reflect.Type) (gocql.TypeInfo, error) {
 						return typeInfo, err
 					}
 					typeInfo.Elements = udtFields
+					return *typeInfo, nil
+				}
+			} else if t.Implements(reflect.TypeOf((*tuple.BaseTupleInterface)(nil)).Elem()) {
+				var tVal reflect.Value = reflect.New(t)
+				if baseTuple, ok := tVal.Elem().Interface().(tuple.BaseTupleInterface); ok {
+					typeInfo := &gocql.TupleTypeInfo{
+						NativeType: gocql.NewNativeType(5, gocql.TypeTuple, ""),
+					}
+
+					tupleFields, err := convertToCqlTuple(baseTuple)
+					if err != nil {
+						return typeInfo, err
+					}
+					typeInfo.Elems = tupleFields
 					return *typeInfo, nil
 				}
 			}
@@ -155,7 +170,7 @@ func goType(t gocql.TypeInfo) (reflect.Type, error) {
 	}
 }
 
-// convertToCqlUDT - Convert from go UDT type to CQL UDT type
+// convertToCqlUDT - Convert from go UDT type to CQL UDT Fields type
 func convertToCqlUDT(m udt.BaseUDTInterface) ([]gocql.UDTField, error) {
 	t := reflect.TypeOf(m)
 
@@ -169,15 +184,23 @@ func convertToCqlUDT(m udt.BaseUDTInterface) ([]gocql.UDTField, error) {
 		}
 
 		fieldName := strings.TrimSpace(field.Tag.Get("db"))
-		if len(fieldName) > 0 && fieldName != "-" {
-			idx := slices.IndexFunc(fieldNames, func(c string) bool { return c == fieldName })
-			if idx >= 0 {
-				return nil, fmt.Errorf("%w -> field name: %s", ConflictUDTFieldNameErr, fieldName)
-			}
-			fieldNames = append(fieldNames, fieldName)
+		if fieldName == "-" {
+			continue
+		}
+		if len(fieldName) == 0 {
+			fieldName = reflectx.CamelToSnakeASCII(field.Name)
 		}
 
-		cqlType, _ := convertToDefaultCqlType(field.Type)
+		idx := slices.IndexFunc(fieldNames, func(c string) bool { return c == fieldName })
+		if idx >= 0 {
+			return nil, fmt.Errorf("%w -> field name: %s", ConflictUDTFieldNameErr, fieldName)
+		}
+		fieldNames = append(fieldNames, fieldName)
+
+		cqlType, err := convertToDefaultCqlType(field.Type)
+		if err != nil {
+			return nil, err
+		}
 
 		udtFields = append(udtFields, gocql.UDTField{
 			Name: fieldName,
@@ -186,6 +209,29 @@ func convertToCqlUDT(m udt.BaseUDTInterface) ([]gocql.UDTField, error) {
 	}
 
 	return udtFields, nil
+}
+
+// convertToCqlTuple - Convert from go struct type to CQL Tuple Elements type
+func convertToCqlTuple(m tuple.BaseTupleInterface) ([]gocql.TypeInfo, error) {
+	t := reflect.TypeOf(m)
+
+	var tupleFields []gocql.TypeInfo
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if field.PkgPath != "" { //ignore unexported field
+			continue
+		}
+
+		cqlType, err := convertToDefaultCqlType(field.Type)
+		if err != nil {
+			return nil, err
+		}
+
+		tupleFields = append(tupleFields, cqlType)
+	}
+
+	return tupleFields, nil
 }
 
 // getCqlBaseType - get CQL base type from name
