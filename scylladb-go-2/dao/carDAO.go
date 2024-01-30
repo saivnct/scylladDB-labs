@@ -11,9 +11,9 @@ type CarDAO struct {
 	DAO
 }
 
-func mCarDAO(session gocqlx.Session, keyspace string) *CarDAO {
+func mCarDAO(session gocqlx.Session) *CarDAO {
 	d := &CarDAO{}
-	err := d.InitDAO(session, keyspace, entity.Car{})
+	err := d.InitDAO(session, entity.Car{})
 	if err != nil {
 		log.Fatal(color.Red.Sprintf("❌ Failed to create DAO: %v", err))
 	}

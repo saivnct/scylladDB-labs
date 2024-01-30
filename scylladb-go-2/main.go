@@ -68,7 +68,7 @@ func main() {
 
 	defer session.Close()
 
-	dao.Init(session, keyspace)
+	dao.Init(session)
 
 	log.Println("------------Car----------------")
 	//for _, column := range dao.Car.EntityInfo.Columns {

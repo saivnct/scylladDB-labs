@@ -11,9 +11,9 @@ type PersonDAO struct {
 	DAO
 }
 
-func mPersonDAO(session gocqlx.Session, keyspace string) *PersonDAO {
+func mPersonDAO(session gocqlx.Session) *PersonDAO {
 	d := &PersonDAO{}
-	err := d.InitDAO(session, keyspace, entity.Person{})
+	err := d.InitDAO(session, entity.Person{})
 	if err != nil {
 		log.Fatal(color.Red.Sprintf("❌ Failed to create DAO: %v", err))
 	}

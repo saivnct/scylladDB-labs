@@ -9,7 +9,7 @@ var (
 	Person *PersonDAO
 )
 
-func Init(session gocqlx.Session, keyspace string) {
-	Car = mCarDAO(session, keyspace)
-	Person = mPersonDAO(session, keyspace)
+func Init(session gocqlx.Session) {
+	Car = mCarDAO(session)
+	Person = mPersonDAO(session)
 }
