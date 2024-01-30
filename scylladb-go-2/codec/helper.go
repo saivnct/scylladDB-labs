@@ -61,3 +61,36 @@ func GetCqlTypeDeclareStatement(cqlType gocql.TypeInfo) string {
 
 	return buf.String()
 }
+
+func ScanUDTs(cqlType gocql.TypeInfo) []gocql.UDTTypeInfo {
+	var udtColInfo []gocql.UDTTypeInfo
+
+	if cqlUDT, ok := cqlType.(gocql.UDTTypeInfo); ok {
+		udtColInfo = append(udtColInfo, cqlUDT)
+		for _, udtField := range cqlUDT.Elements {
+			udtColInfo = append(udtColInfo, ScanUDTs(udtField.Type)...)
+		}
+
+	} else if cqlCollection, ok := cqlType.(gocql.CollectionType); ok {
+		if cqlCollection.Key != nil {
+			udtColInfo = append(udtColInfo, ScanUDTs(cqlCollection.Key)...)
+		}
+		udtColInfo = append(udtColInfo, ScanUDTs(cqlCollection.Elem)...)
+	} else if cqlTuple, ok := cqlType.(gocql.TupleTypeInfo); ok {
+		for _, e := range cqlTuple.Elems {
+			udtColInfo = append(udtColInfo, ScanUDTs(e)...)
+		}
+	}
+
+	return udtColInfo
+}
+
+func GetCqlCreateUDTStatement(cqlUDT gocql.UDTTypeInfo) string {
+	var udtFieldsDeclareSts []string
+	for _, udtField := range cqlUDT.Elements {
+		udtFieldsDeclareSts = append(udtFieldsDeclareSts, fmt.Sprintf("%s %s", udtField.Name, GetCqlTypeDeclareStatement(udtField.Type)))
+	}
+
+	return fmt.Sprintf("CREATE TYPE IF NOT EXISTS %s (%s)", cqlUDT.Name, strings.Join(udtFieldsDeclareSts, ", "))
+
+}

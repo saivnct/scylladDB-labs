@@ -1,8 +1,11 @@
 package main
 
 import (
+	"giangbb.studio/scylladb/codec"
 	"giangbb.studio/scylladb/connection"
 	"giangbb.studio/scylladb/dao"
+	sliceUtils "giangbb.studio/scylladb/utils"
+	"github.com/gocql/gocql"
 	"github.com/gookit/color"
 	"github.com/joho/godotenv"
 	"github.com/scylladb/gocqlx/v2"
@@ -70,18 +73,32 @@ func main() {
 	dao.Init(session, keyspace)
 
 	log.Println("------------Car----------------")
-	for _, column := range dao.Car.EntityInfo.Columns {
-		log.Println(column.String())
-		log.Printf("%s\n\n", column.GetCqlTypeDeclareStatement())
-	}
-	log.Println("Car", dao.Car.EntityInfo.TableMetaData)
+	//for _, column := range dao.Car.EntityInfo.Columns {
+	//	log.Println(column.String())
+	//	log.Printf("%s\n\n", column.GetCqlTypeDeclareStatement())
+	//}
+	//log.Println("Car", dao.Car.EntityInfo.TableMetaData)
+
+	udts := dao.Car.EntityInfo.ScanUDTs()
+	//udtNames := sliceUtils.Map(udts, func(udt gocql.UDTTypeInfo) string { return udt.Name })
+	//log.Printf("Car UDTs: %s\n\n", strings.Join(udtNames, ", "))
+	udtStms := sliceUtils.Map(udts, func(udt gocql.UDTTypeInfo) string { return codec.GetCqlCreateUDTStatement(udt) })
+	log.Printf("Car UDTs: \n%s\n", strings.Join(udtStms, "\n"))
+	log.Printf("Car: %s\n\n", dao.Car.EntityInfo.GetGreateTableStatement())
 
 	log.Println("------------Person----------------")
-	for _, column := range dao.Person.EntityInfo.Columns {
-		log.Println(column.String())
-		log.Printf("%s\n\n", column.GetCqlTypeDeclareStatement())
-	}
-	log.Println("Person", dao.Person.EntityInfo.TableMetaData)
+	//for _, column := range dao.Person.EntityInfo.Columns {
+	//	log.Println(column.String())
+	//	log.Printf("%s\n\n", column.GetCqlTypeDeclareStatement())
+	//}
+	//log.Println("Person", dao.Person.EntityInfo.TableMetaData)
+
+	udts = dao.Person.EntityInfo.ScanUDTs()
+	//udtNames = sliceUtils.Map(udts, func(udt gocql.UDTTypeInfo) string { return udt.Name })
+	//log.Printf("Car UDTs: %s\n\n", strings.Join(udtNames, ", "))
+	udtStms = sliceUtils.Map(udts, func(udt gocql.UDTTypeInfo) string { return codec.GetCqlCreateUDTStatement(udt) })
+	log.Printf("Person UDTs: \n%s\n\n", strings.Join(udtStms, "\n"))
+	log.Printf("Car: %s\n\n", dao.Person.EntityInfo.GetGreateTableStatement())
 
 	//cars, err := dao.Car.FindAll(session)
 	//if err != nil {

@@ -109,67 +109,6 @@ func convertToDefaultCqlType(t reflect.Type) (gocql.TypeInfo, error) {
 	}
 }
 
-func goType(t gocql.TypeInfo) (reflect.Type, error) {
-	switch t.Type() {
-	case gocql.TypeVarchar, gocql.TypeAscii, gocql.TypeInet, gocql.TypeText:
-		return reflect.TypeOf(*new(string)), nil
-	case gocql.TypeBigInt, gocql.TypeCounter:
-		return reflect.TypeOf(*new(int64)), nil
-	case gocql.TypeTime:
-		return reflect.TypeOf(*new(time.Duration)), nil
-	case gocql.TypeTimestamp:
-		return reflect.TypeOf(*new(time.Time)), nil
-	case gocql.TypeBlob:
-		return reflect.TypeOf(*new([]byte)), nil
-	case gocql.TypeBoolean:
-		return reflect.TypeOf(*new(bool)), nil
-	case gocql.TypeFloat:
-		return reflect.TypeOf(*new(float32)), nil
-	case gocql.TypeDouble:
-		return reflect.TypeOf(*new(float64)), nil
-	case gocql.TypeInt:
-		return reflect.TypeOf(*new(int)), nil
-	case gocql.TypeSmallInt:
-		return reflect.TypeOf(*new(int16)), nil
-	case gocql.TypeTinyInt:
-		return reflect.TypeOf(*new(int8)), nil
-	case gocql.TypeDecimal:
-		return reflect.TypeOf(*new(*inf.Dec)), nil
-	case gocql.TypeUUID, gocql.TypeTimeUUID:
-		return reflect.TypeOf(*new(gocql.UUID)), nil
-	case gocql.TypeList, gocql.TypeSet:
-		elemType, err := goType(t.(gocql.CollectionType).Elem)
-		if err != nil {
-			return nil, err
-		}
-		return reflect.SliceOf(elemType), nil
-	case gocql.TypeMap:
-		keyType, err := goType(t.(gocql.CollectionType).Key)
-		if err != nil {
-			return nil, err
-		}
-		valueType, err := goType(t.(gocql.CollectionType).Elem)
-		if err != nil {
-			return nil, err
-		}
-		return reflect.MapOf(keyType, valueType), nil
-	case gocql.TypeVarint:
-		return reflect.TypeOf(*new(*big.Int)), nil
-	case gocql.TypeTuple:
-		// what can we do here? all there is to do is to make a list of interface{}
-		tuple := t.(gocql.TupleTypeInfo)
-		return reflect.TypeOf(make([]interface{}, len(tuple.Elems))), nil
-	case gocql.TypeUDT:
-		return reflect.TypeOf(make(map[string]interface{})), nil
-	case gocql.TypeDate:
-		return reflect.TypeOf(*new(time.Time)), nil
-	case gocql.TypeDuration:
-		return reflect.TypeOf(*new(gocql.Duration)), nil
-	default:
-		return nil, fmt.Errorf("cannot create Go type for unknown CQL type %s", t)
-	}
-}
-
 // convertToCqlUDT - Convert from go UDT type to CQL UDT Fields type
 func convertToCqlUDT(m udt.BaseUDTInterface) ([]gocql.UDTField, error) {
 	t := reflect.TypeOf(m)
@@ -232,6 +171,67 @@ func convertToCqlTuple(m tuple.BaseTupleInterface) ([]gocql.TypeInfo, error) {
 	}
 
 	return tupleFields, nil
+}
+
+func goType(t gocql.TypeInfo) (reflect.Type, error) {
+	switch t.Type() {
+	case gocql.TypeVarchar, gocql.TypeAscii, gocql.TypeInet, gocql.TypeText:
+		return reflect.TypeOf(*new(string)), nil
+	case gocql.TypeBigInt, gocql.TypeCounter:
+		return reflect.TypeOf(*new(int64)), nil
+	case gocql.TypeTime:
+		return reflect.TypeOf(*new(time.Duration)), nil
+	case gocql.TypeTimestamp:
+		return reflect.TypeOf(*new(time.Time)), nil
+	case gocql.TypeBlob:
+		return reflect.TypeOf(*new([]byte)), nil
+	case gocql.TypeBoolean:
+		return reflect.TypeOf(*new(bool)), nil
+	case gocql.TypeFloat:
+		return reflect.TypeOf(*new(float32)), nil
+	case gocql.TypeDouble:
+		return reflect.TypeOf(*new(float64)), nil
+	case gocql.TypeInt:
+		return reflect.TypeOf(*new(int)), nil
+	case gocql.TypeSmallInt:
+		return reflect.TypeOf(*new(int16)), nil
+	case gocql.TypeTinyInt:
+		return reflect.TypeOf(*new(int8)), nil
+	case gocql.TypeDecimal:
+		return reflect.TypeOf(*new(*inf.Dec)), nil
+	case gocql.TypeUUID, gocql.TypeTimeUUID:
+		return reflect.TypeOf(*new(gocql.UUID)), nil
+	case gocql.TypeList, gocql.TypeSet:
+		elemType, err := goType(t.(gocql.CollectionType).Elem)
+		if err != nil {
+			return nil, err
+		}
+		return reflect.SliceOf(elemType), nil
+	case gocql.TypeMap:
+		keyType, err := goType(t.(gocql.CollectionType).Key)
+		if err != nil {
+			return nil, err
+		}
+		valueType, err := goType(t.(gocql.CollectionType).Elem)
+		if err != nil {
+			return nil, err
+		}
+		return reflect.MapOf(keyType, valueType), nil
+	case gocql.TypeVarint:
+		return reflect.TypeOf(*new(*big.Int)), nil
+	case gocql.TypeTuple:
+		// what can we do here? all there is to do is to make a list of interface{}
+		tuple := t.(gocql.TupleTypeInfo)
+		return reflect.TypeOf(make([]interface{}, len(tuple.Elems))), nil
+	case gocql.TypeUDT:
+		return reflect.TypeOf(make(map[string]interface{})), nil
+	case gocql.TypeDate:
+		return reflect.TypeOf(*new(time.Time)), nil
+	case gocql.TypeDuration:
+		return reflect.TypeOf(*new(gocql.Duration)), nil
+	default:
+		return nil, fmt.Errorf("cannot create Go type for unknown CQL type %s", t)
+	}
 }
 
 // getCqlBaseType - get CQL base type from name
