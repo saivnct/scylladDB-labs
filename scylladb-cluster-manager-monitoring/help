@@ -34,6 +34,7 @@
 
 	- Wait until the ScyllaDB cluster is up and running (UN status). It may take several minutes. Check the status with:
 		docker-compose exec scylla-node1 nodetool status
+		docker-compose exec scylla-node1 cqlsh
 		docker-compose exec scylla-node1 bash
 
 
