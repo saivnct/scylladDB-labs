@@ -132,6 +132,11 @@ public class AbstractScyllaDAO<KeyType, T> {
         return this.operations.select(query, this.tClass);
     }
 
+    public Slice<T> find(Query query, Pageable pageable) {
+        Assert.notNull(pageable, "Pageable must not be null");
+        return this.operations.slice(query.pageRequest(pageable), this.tClass);
+    }
+
     public T findOne(Query query){
         return this.operations.selectOne(query, this.tClass);
     }

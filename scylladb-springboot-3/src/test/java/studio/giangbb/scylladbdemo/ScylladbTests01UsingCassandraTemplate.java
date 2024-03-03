@@ -14,7 +14,9 @@ import studio.giangbb.scylladbdemo.models.PersonName;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -54,20 +56,24 @@ class ScylladbTests01UsingCassandraTemplate {
 
 		return personList;
 	}
-	public static List<Car> getDummyCarList() {
-		List<Car> carList= new ArrayList<>();
+	public static Map<String, List<Car>> getDummyCarMap() {
+		Map<String, List<Car>> carMap = new HashMap<>();
+
 		int n = 6;
 		int m = 8;
 		for (int i = 0; i < n; i++) {
 			String make = i % 2 == 0 ? "Japan" : "USA";
+			String brand = String.format("brand_%d", i);
+			List<Car> carList= new ArrayList<>();
 			for (int j = 0; j < m; j++){
 				Car.Key key = new Car.Key(String.format("brand_%d", i), String.format("model_%d", j));
 				Car car = new Car(key, make, 2000+i);
 				carList.add(car);
 			}
+			carMap.put(brand, carList);
 		}
 
-		return carList;
+		return carMap;
 	}
 
 	@Test

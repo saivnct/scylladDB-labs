@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+
+  scylla-node1:
+    container_name: scylla-node1
+    image: scylladb/scylla:5.2
+    ports:
+      - 9042:9042
+      - 9180:9180
+    restart: always
+    command: --smp 1 --memory 1G --overprovisioned 1 --api-address 0.0.0.0
+    volumes:
+      - ./scylla_data_node1:/var/lib/scylla
+    networks:
+      - scylla-network
+      
+
+
+networks:
+  scylla-network:
+    name: scylla

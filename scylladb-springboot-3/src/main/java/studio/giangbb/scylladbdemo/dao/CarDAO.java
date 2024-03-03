@@ -3,8 +3,16 @@ package studio.giangbb.scylladbdemo.dao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
+import org.springframework.data.cassandra.core.query.Query;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Component;
 import studio.giangbb.scylladbdemo.models.Car;
+
+import java.util.List;
+
+import static org.springframework.data.cassandra.core.query.Criteria.where;
 
 /**
  * Created by giangbb on 26/06/2023
@@ -19,5 +27,20 @@ public class CarDAO extends AbstractScyllaDAO<Car.Key, Car> {
         super(cassandraOperations, Car.Key.class, Car.class);
     }
 
+    public List<Car> findAllByBrand(String brand){
+        return this.find(
+                Query.query(
+                        where("brand").is(brand)
+                )
+        );
+    }
+
+    public Slice<Car> findAllByYear(int year, Pageable pageable){
+        return this.find(
+                Query.query(
+                        where("year").is(year)
+                ), pageable
+        );
+    }
 
 }

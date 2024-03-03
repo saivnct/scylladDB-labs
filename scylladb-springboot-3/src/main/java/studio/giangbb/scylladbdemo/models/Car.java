@@ -24,6 +24,22 @@ public class Car{
             this.model = model;
         }
 
+        public String getBrand() {
+            return brand;
+        }
+
+        public void setBrand(String brand) {
+            this.brand = brand;
+        }
+
+        public String getModel() {
+            return model;
+        }
+
+        public void setModel(String model) {
+            this.model = model;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;

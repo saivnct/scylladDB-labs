@@ -29,7 +29,7 @@ import java.util.List;
  * Created by Giangbb on 01/03/2024
  */
 @Configuration
-@EnableCassandraRepositories(basePackages = "studio.giangbb.scylladbdemo")
+@EnableCassandraRepositories(basePackages = "studio.giangbb.scylladbdemo.repository")
 public class ScyllaConfiguration extends AbstractCassandraConfiguration {
     private final Logger log = LoggerFactory.getLogger(ScyllaConfiguration.class);
 

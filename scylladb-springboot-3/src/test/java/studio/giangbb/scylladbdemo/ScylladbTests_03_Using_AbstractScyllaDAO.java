@@ -5,44 +5,46 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.cassandra.core.CassandraAdminTemplate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import studio.giangbb.scylladbdemo.dao.CarDAO;
+import studio.giangbb.scylladbdemo.dao.PersonDAO;
 import studio.giangbb.scylladbdemo.models.Car;
 import studio.giangbb.scylladbdemo.models.Person;
 import studio.giangbb.scylladbdemo.models.PersonName;
-import studio.giangbb.scylladbdemo.repository.CarRepository;
-import studio.giangbb.scylladbdemo.repository.PersonRepository;
 
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.data.cassandra.core.query.Criteria.where;
-import static org.springframework.data.cassandra.core.query.Query.query;
 import static studio.giangbb.scylladbdemo.ScylladbTests01UsingCassandraTemplate.getDummyCarMap;
 import static studio.giangbb.scylladbdemo.ScylladbTests01UsingCassandraTemplate.getDummyPersonList;
 
 @SpringBootTest
-class ScylladbTests02UsingCassandraRepository {
-	private final Logger logger = LoggerFactory.getLogger(ScylladbTests02UsingCassandraRepository.class);
+class ScylladbTests_03_Using_AbstractScyllaDAO {
 
 	@Autowired
-	private PersonRepository personRepository;
+	private CarDAO carDAO;
 
 	@Autowired
-	private CarRepository carRepository;
+	private PersonDAO personDAO;
+
+	private final Logger logger = LoggerFactory.getLogger(ScylladbTests_03_Using_AbstractScyllaDAO.class);
 
 
 	@Test
 	public void testPersonWithCassandraRepository() throws UnknownHostException, ExecutionException, InterruptedException {
 		//delete all
-		personRepository.deleteAll();
+		personDAO.deleteAll();
 
-		long count = personRepository.count();
+		long count = personDAO.countAll();
 		assertThat(count).isEqualTo(0);
 
 		List<Person> personList = getDummyPersonList();
@@ -52,7 +54,7 @@ class ScylladbTests02UsingCassandraRepository {
 				long threadId = Thread.currentThread().getId();
 				logger.info("insert Person: {} - threadId: {}", person.getId().toString(), threadId);
 
-				Person personInsert = personRepository.save(person);
+				Person personInsert = personDAO.save(person);
 				assertThat(person).isEqualTo(personInsert);
 				return personInsert;
 			});
@@ -69,24 +71,24 @@ class ScylladbTests02UsingCassandraRepository {
 
 
 
-		count = personRepository.count();
+		count = personDAO.countAll();
 		assertThat(count).isEqualTo(personList.size());
 
 		//find with id(primkey)
 		for (Person person: personList){
-			Person fetchPerson = personRepository.findById(person.getId()).orElse(null);
+			Person fetchPerson = personDAO.getByKey(person.getId());
 			assertThat(fetchPerson).isNotNull();
 			assertThat(fetchPerson).isEqualTo(person);
 		}
 
 		//find all
-		List<Person> fetchPersons = personRepository.findAll();
+		List<Person> fetchPersons = personDAO.findAll();
 		assertThat(fetchPersons.size()).isEqualTo(personList.size());
 
 
 
 		//find with index column
-		fetchPersons = personRepository.findAllByJob(Person.Job.TEACHER);
+		fetchPersons = personDAO.findAllByJob(Person.Job.TEACHER);
 		assertThat(fetchPersons.size()).isEqualTo(personList.size()/2);
 
 		logger.info("findAllByJob: {}", fetchPersons.stream().map(Person::getJob).collect(Collectors.toList()));
@@ -94,33 +96,23 @@ class ScylladbTests02UsingCassandraRepository {
 			assertThat(person.getJob()).isEqualTo(Person.Job.TEACHER);
 		}
 
-		//find with index column - custom query
-		fetchPersons = personRepository.queryAllByJob(Person.Job.ENGINEER);
-		assertThat(fetchPersons.size()).isEqualTo(personList.size()/2);
-		logger.info("findAllByJob: {}", fetchPersons.stream().map(Person::getJob).collect(Collectors.toList()));
-		for (Person person: fetchPersons) {
-			assertThat(person.getJob()).isEqualTo(Person.Job.ENGINEER);
-		}
-
-
-		//find no index column with  @AllowFiltering
+		//find no index column with AllowFiltering
 		PersonName personName = new PersonName("fist","last");
-		fetchPersons = personRepository.findAllByName(new PersonName("fist","last"));
+		fetchPersons = personDAO.findAllByName(new PersonName("fist","last"));
 		assertThat(fetchPersons.size()).isEqualTo(personList.size() / 2);
 		logger.info("findAllByName: {}", fetchPersons.stream().map(Person::getName).collect(Collectors.toList()));
 		for (Person person: fetchPersons) {
 			assertThat(person.getName()).isEqualTo(personName);
 		}
-
 	}
 
 
 	@Test
 	public void testCarWithCassandraRepository() throws ExecutionException, InterruptedException {
 		//delete all
-		carRepository.deleteAll();
+		carDAO.deleteAll();
 
-		long count = carRepository.count();
+		long count = carDAO.countAll();
 		assertThat(count).isEqualTo(0);
 
 		Map<String, List<Car>> carMap = getDummyCarMap();
@@ -132,7 +124,7 @@ class ScylladbTests02UsingCassandraRepository {
 				long threadId = Thread.currentThread().getId();
 				logger.info("insert Car: {} - threadId: {}", car.getKey().toString(), threadId);
 
-				Car carInsert = carRepository.save(car);
+				Car carInsert = carDAO.save(car);
 				assertThat(car).isEqualTo(carInsert);
 				return carInsert;
 			});
@@ -147,36 +139,28 @@ class ScylladbTests02UsingCassandraRepository {
 				= CompletableFuture.allOf(futureArr);
 		combinedFuture.get();
 
-		count = carRepository.count();
+		count = carDAO.countAll();
 		assertThat(count).isEqualTo(carList.size());
 
 		//find with id(primkey)
 		for (Car car: carList){
-			Car fetchCar = carRepository.findById(car.getKey()).orElse(null);
+			Car fetchCar = carDAO.getByKey(car.getKey());
 			assertThat(fetchCar).isNotNull();
 			assertThat(fetchCar).isEqualTo(car);
 		}
 
 		//find all
-		List<Car> fetchCars = carRepository.findAll();
+		List<Car> fetchCars = carDAO.findAll();
 		assertThat(fetchCars.size()).isEqualTo(carList.size());
 
 		//find with partition key
 		String brand = carList.get(0).getKey().getBrand();
-		fetchCars = carRepository.findAllByBrand(brand);
+		fetchCars = carDAO.findAllByBrand(brand);
 		assertThat(fetchCars.size()).isEqualTo(carMap.get(brand).size());
-
-		//find with partition key - V2
-//		String brand = carList.get(0).getKey().getBrand();
-////		fetchCars = carRepository.findAllByKeyBrand(brand);
-//		fetchCars = carRepository.findAllByKey_Brand(brand);
-//		assertThat(fetchCars.size()).isEqualTo(carMap.get(brand).size());
-
-
 
 		//find with pagination
 		fetchCars = new ArrayList<>();
-		Slice<Car> carsSlice = carRepository.findAll(PageRequest.of(0, 5));
+		Slice<Car> carsSlice = carDAO.findAll(PageRequest.of(0, 5));
 		while (carsSlice.hasContent()) {
 			fetchCars.addAll(carsSlice.getContent());
 			// process the cars
@@ -184,7 +168,7 @@ class ScylladbTests02UsingCassandraRepository {
 				break;
 			}
 			Pageable nextPageable = carsSlice.nextPageable();
-			carsSlice = carRepository.findAll(nextPageable);
+			carsSlice = carDAO.findAll(nextPageable);
 		}
 		assertThat(fetchCars.size()).isEqualTo(carList.size());
 //		for (Car car: fetchCars){
@@ -195,7 +179,7 @@ class ScylladbTests02UsingCassandraRepository {
 		//find by index with pagination
 		final int year = 2000;
 		fetchCars = new ArrayList<>();
-		carsSlice = carRepository.findAllByYear(year, PageRequest.of(0, 3));
+		carsSlice = carDAO.findAllByYear(year, PageRequest.of(0, 3));
 		while (carsSlice.hasContent()) {
 			fetchCars.addAll(carsSlice.getContent());
 			// process the cars
@@ -203,33 +187,17 @@ class ScylladbTests02UsingCassandraRepository {
 				break;
 			}
 			Pageable nextPageable = carsSlice.nextPageable();
-//			logger.info("nextPageable: {} - {}", nextPageable.getPageNumber(), nextPageable.getPageSize());
-			carsSlice = carRepository.findAllByYear(year, nextPageable);
+			logger.info("nextPageable: {} - {}", nextPageable.getPageNumber(), nextPageable.getPageSize());
+			carsSlice = carDAO.findAllByYear(year, nextPageable);
 		}
 		assertThat(fetchCars.size()).isEqualTo(
 				carList.stream()
-				.filter(car -> car.getYear() == year)
-				.count()
+						.filter(car -> car.getYear() == year)
+						.count()
 		);
-//		for (Car car: fetchCars){
-//			logger.info("car: {} - {}", car.getKey(), car.getYear());
-//		}
-
-
-
-		//find with custom Repository
-		final int year2 = 2002;
-		final String make = "Japan";
-		fetchCars = carRepository.FindByYearAndMake(year2, make);
-		assertThat(fetchCars.size()).isEqualTo(
-				carList.stream()
-				.filter(car -> car.getYear() == year2 && car.getMake().equals(make))
-				.count()
-		);
-//		for (Car car: fetchCars){
-//			logger.info("car: {} - {} - {}", car.getKey(), car.getYear(), car.getMake());
-//		}
+		for (Car car: fetchCars){
+			logger.info("car: {} - {}", car.getKey(), car.getYear());
+		}
 
 	}
-
 }
