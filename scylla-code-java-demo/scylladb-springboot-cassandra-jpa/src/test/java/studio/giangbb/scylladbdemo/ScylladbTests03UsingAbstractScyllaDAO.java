@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.cassandra.core.CassandraAdminTemplate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -28,7 +27,7 @@ import static studio.giangbb.scylladbdemo.ScylladbTests01UsingCassandraTemplate.
 import static studio.giangbb.scylladbdemo.ScylladbTests01UsingCassandraTemplate.getDummyPersonList;
 
 @SpringBootTest
-class ScylladbTests_03_Using_AbstractScyllaDAO {
+class ScylladbTests03UsingAbstractScyllaDAO {
 
 	@Autowired
 	private CarDAO carDAO;
@@ -36,7 +35,7 @@ class ScylladbTests_03_Using_AbstractScyllaDAO {
 	@Autowired
 	private PersonDAO personDAO;
 
-	private final Logger logger = LoggerFactory.getLogger(ScylladbTests_03_Using_AbstractScyllaDAO.class);
+	private final Logger logger = LoggerFactory.getLogger(ScylladbTests03UsingAbstractScyllaDAO.class);
 
 
 	@Test

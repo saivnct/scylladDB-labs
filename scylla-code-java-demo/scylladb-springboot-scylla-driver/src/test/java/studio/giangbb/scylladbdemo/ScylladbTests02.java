@@ -121,6 +121,13 @@ class ScylladbTests02 {
 		session.execute(preparedCreateIndex.bind());
 	}
 
+	@Test
+	public void testCount(){
+		ClientDao clientDao = daoMapper.clientDao();
+
+		long count = clientDao.countAll();
+		logger.info("count {}", count);
+	}
 
 	@Test
 	public void testClient() throws UnknownHostException, ExecutionException, InterruptedException {

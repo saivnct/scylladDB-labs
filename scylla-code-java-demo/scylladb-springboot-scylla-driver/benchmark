@@ -1,0 +1,39 @@
+-----------------------1 NODE-----------------------
+List<Client> clientList = getDummyClientList(1, 100);
+Execution time in milliSec: 113
+Truncate - Execution time in milliSec: 301
+JPA:
+Execution time in milliSec: 175
+Truncate - Execution time in milliSec: 285
+
+
+
+List<Client> clientList = getDummyClientList(10, 100);
+Execution time in milliSec: 723
+Truncate - Execution time in milliSec: 310
+JPA:
+Execution time in milliSec: 1088
+Truncate - Execution time in milliSec: 293
+
+
+
+List<Client> clientList = getDummyClientList(10, 1000);
+Execution time in milliSec: 5275
+Truncate - Execution time in milliSec: 532
+JPA:
+Execution time in milliSec: 6140
+Truncate - Execution time in milliSec: 386
+
+
+List<Client> clientList = getDummyClientList(100, 1000);
+Execution time in milliSec: 43952
+Truncate - Execution time in milliSec: 1531
+JPA:
+Execution time in milliSec: 47532
+Truncate - Execution time in milliSec: 1067
+
+
+
+
+
+
