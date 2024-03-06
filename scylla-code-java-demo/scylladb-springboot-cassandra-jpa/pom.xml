@@ -11,8 +11,8 @@
 	<groupId>studio.giangbb</groupId>
 	<artifactId>scylladb-demo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>scylladb-demo</name>
-	<description>Demo project for Spring Boot</description>
+	<name>scylladb-cassandra-jpa</name>
+	<description>Demo project for using scylladb with cassandra jpa</description>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
@@ -32,41 +32,11 @@
 			<scope>test</scope>
 		</dependency>
 
-
-		<dependency>
-			<groupId>com.scylladb</groupId>
-			<artifactId>java-driver-core</artifactId>
-			<version>4.17.0.0</version>
-		</dependency>
-
-
-		<dependency>
-			<groupId>com.scylladb</groupId>
-			<artifactId>java-driver-mapper-runtime</artifactId>
-			<version>4.17.0.0</version>
-		</dependency>
-
 		<dependency>
 			<groupId>org.cognitor.cassandra</groupId>
 			<artifactId>cassandra-migration</artifactId>
 			<version>2.6.1_v4</version>
 		</dependency>
-
-		<dependency>
-			<groupId>javax.annotation</groupId>
-			<artifactId>javax.annotation-api</artifactId>
-			<version>1.3.2</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>32.0.1-jre</version>
-		</dependency>
-
-
-
-
 	</dependencies>
 
 	<build>
