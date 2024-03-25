@@ -1,4 +1,4 @@
------------------------1 NODE-----------------------
+-----------------------1 NODE INSERT-----------------------
 List<Client> clientList = getDummyClientList(1, 100);
 Execution time in milliSec: 113
 Truncate - Execution time in milliSec: 301
@@ -31,6 +31,32 @@ Truncate - Execution time in milliSec: 1531
 JPA:
 Execution time in milliSec: 47532
 Truncate - Execution time in milliSec: 1067
+
+
+
+
+
+
+-----------------------3 NODE INSERT-----------------------
+List<Client> clientList = getDummyClientList(100, 1000);
+Execution time in milliSec: 30051, 30025, 30500, 32822 (200k), 33356(400k)
+Truncate - Execution time in milliSec: 528, 447
+JPA:
+Execution time in milliSec: 23416, 24784, 24808, 24851 (300k), 27246(500k)
+Truncate - Execution time in milliSec: 470, 468
+
+
+
+
+-----------------------3 NODE FIND ALL-----------------------
+600K
+
+Execution time in milliSec: 3811, 3754, 3820
+JPA:
+Execution time in milliSec: 5858, 5656
+
+
+
 
 
 

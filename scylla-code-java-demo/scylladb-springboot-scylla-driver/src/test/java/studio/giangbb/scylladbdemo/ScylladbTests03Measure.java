@@ -1,6 +1,12 @@
 package studio.giangbb.scylladbdemo;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.PagingIterable;
+import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +17,10 @@ import studio.giangbb.scylladbdemo.dao.DaoMapper;
 import studio.giangbb.scylladbdemo.models.Client;
 import studio.giangbb.scylladbdemo.models.ClientInfo;
 import studio.giangbb.scylladbdemo.models.ClientName;
+
+
+
+
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -69,6 +79,22 @@ class ScylladbTests03Measure {
 		this.clientDAO = daoMapper.clientDao();
 	}
 
+	@Test
+	public void testCount(){
+		long count = clientDAO.countAll();
+		logger.info("count {}", count);
+
+		Metadata metadata = session.getMetadata();
+		logger.info("Connected session {}", session.getName());
+
+
+		for (Node node : metadata.getNodes().values()) {
+			logger.info("Node session {}, Datatacenter: {}; Host: {}; Rack: {}", node.getEndPoint().resolve(),
+					node.getDatacenter(), node.getEndPoint(), node.getRack());
+		}
+	}
+
+
 
 	@Test
 	public void testDelete() {
@@ -103,6 +129,28 @@ class ScylladbTests03Measure {
 
 		long count = clientDAO.countAll();
 		assertThat(count).isEqualTo(clientList.size() + startCount);
+	}
+
+
+	@Test
+	public void testQuery() {
+		long count = clientDAO.countAll();
+
+		long startTime = System.nanoTime();
+		PagingIterable<Client> fetchClients = clientDAO.findAll();
+		List<Client> clients = new ArrayList<>();
+		assertThat(fetchClients.iterator().hasNext()).isEqualTo(true);
+		for (Client client : fetchClients) {
+			clients.add(client);
+		}
+		long endTime = System.nanoTime();
+
+
+		long duration = (endTime - startTime);  // compute the elapsed time in nanoseconds
+		logger.info("Execution time in milliSec: {}", duration/1000000);
+
+
+		Assertions.assertThat(count).isEqualTo(clients.size());
 	}
 
 

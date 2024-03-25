@@ -107,7 +107,19 @@ public class ScyllaDriverConfiguration {
     ) {
         CqlSessionBuilder sessionBuilder = new CqlSessionBuilder().withConfigLoader(driverConfigLoaderBuilder.build());
         for (String contactPoint : contactPoints) {
-            InetSocketAddress address = InetSocketAddress.createUnresolved(contactPoint, port);
+            InetSocketAddress address;
+
+            String[] contactPointParts = contactPoint.split(":");
+            if (contactPointParts.length == 1) {
+                address = InetSocketAddress.createUnresolved(contactPointParts[0], port);
+            }else if (contactPointParts.length == 2){
+                address = InetSocketAddress.createUnresolved(contactPointParts[0], Integer.parseInt(contactPointParts[1]));
+            }else{
+                throw new IllegalArgumentException("Contact points must be in the format 'host:port'");
+            }
+
+
+//            InetSocketAddress address = InetSocketAddress.createUnresolved(contactPoint, port);
             log.info("Adding contact point {}:{} - {}", address.getHostString(), address.getPort(), address.toString());
             sessionBuilder = sessionBuilder.addContactPoint(address);
         }

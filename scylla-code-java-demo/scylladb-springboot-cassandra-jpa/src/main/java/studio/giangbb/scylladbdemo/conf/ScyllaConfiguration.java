@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.cassandra.config.AbstractCassandraConfiguration;
+import org.springframework.data.cassandra.config.CqlSessionFactoryBean;
 import org.springframework.data.cassandra.config.SchemaAction;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 import org.springframework.util.StringUtils;
@@ -24,6 +25,7 @@ import org.springframework.util.StringUtils;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Giangbb on 01/03/2024
@@ -68,6 +70,11 @@ public class ScyllaConfiguration extends AbstractCassandraConfiguration {
 
     @Override
     protected String getContactPoints() {
+        Set<String> cp = StringUtils.commaDelimitedListToSet(contactPoints);
+        log.info("call getContactPoints: {}", cp);
+
+
+
         return contactPoints;
     }
 
@@ -81,43 +88,58 @@ public class ScyllaConfiguration extends AbstractCassandraConfiguration {
         return localDc;
     }
 
-    @Bean
-    public Database migrationDatabase(){
-        log.info("INIT MIGRATION DB ...");
-        ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder = DriverConfigLoader.programmaticBuilder()
-                .withString(DefaultDriverOption.REQUEST_CONSISTENCY, consistency);
-
-        if (StringUtils.hasLength(username) && StringUtils.hasLength(password)) {
-            configLoaderBuilder = configLoaderBuilder
-                    .withString(
-                            DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class.getName()
-                    )
-                    .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, username)
-                    .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, password);
-        }
-
-        List<String> contactPoints = Arrays.asList(this.contactPoints.split(","));
-        CqlSessionBuilder sessionBuilder = new CqlSessionBuilder().withConfigLoader(configLoaderBuilder.build());
-        for (String contactPoint : contactPoints) {
-            InetSocketAddress address = InetSocketAddress.createUnresolved(contactPoint, port);
-            log.info("Adding contact point {}:{} - {}", address.getHostString(), address.getPort(), address.toString());
-            sessionBuilder = sessionBuilder.addContactPoint(address);
-        }
-        sessionBuilder.withLocalDatacenter(localDc);
-
-        CqlIdentifier keyspace = CqlIdentifier.fromCql(keyspaceName);
-
-        CqlSession session = sessionBuilder.withKeyspace(keyspace).build();
-        Database database = new Database(session, new MigrationConfiguration().withKeyspaceName(keyspaceName));
-
-        return database;
-    }
 
 
-
-    @Bean
-    public MigrationTask migrationTask(Database migrationDatabase)  {
-        log.info("INIT MIGRATION TASK ...");
-        return new MigrationTask(migrationDatabase, new MigrationRepository(MigrationRepository.DEFAULT_SCRIPT_PATH));
-    }
+//    @Bean
+//    public Database migrationDatabase(){
+//        log.info("INIT MIGRATION DB ...");
+//        ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder = DriverConfigLoader.programmaticBuilder()
+//                .withString(DefaultDriverOption.REQUEST_CONSISTENCY, consistency);
+//
+//        if (StringUtils.hasLength(username) && StringUtils.hasLength(password)) {
+//            configLoaderBuilder = configLoaderBuilder
+//                    .withString(
+//                            DefaultDriverOption.AUTH_PROVIDER_CLASS, PlainTextAuthProvider.class.getName()
+//                    )
+//                    .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, username)
+//                    .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, password);
+//        }
+//
+//        List<String> contactPoints = Arrays.asList(this.contactPoints.split(","));
+//        CqlSessionBuilder sessionBuilder = new CqlSessionBuilder().withConfigLoader(configLoaderBuilder.build());
+//        for (String contactPoint : contactPoints) {
+//            InetSocketAddress address;
+//
+//            String[] contactPointParts = contactPoint.split(":");
+//            if (contactPointParts.length == 1) {
+//                address = InetSocketAddress.createUnresolved(contactPointParts[0], port);
+//            }else if (contactPointParts.length == 2){
+//                address = InetSocketAddress.createUnresolved(contactPointParts[0], Integer.parseInt(contactPointParts[1]));
+//            }else{
+//                throw new IllegalArgumentException("Contact points must be in the format 'host:port'");
+//            }
+//
+//
+////            InetSocketAddress address = InetSocketAddress.createUnresolved(contactPoint, port);
+//            log.info("Adding contact point {}:{} - {}", address.getHostString(), address.getPort(), address.toString());
+//            sessionBuilder = sessionBuilder.addContactPoint(address);
+//        }
+//        log.info("localDc: {}",localDc);
+//        sessionBuilder.withLocalDatacenter(localDc);
+//
+//        CqlIdentifier keyspace = CqlIdentifier.fromCql(keyspaceName);
+//
+//        CqlSession session = sessionBuilder.withKeyspace(keyspace).build();
+//        Database database = new Database(session, new MigrationConfiguration().withKeyspaceName(keyspaceName));
+//
+//        return database;
+//    }
+//
+//
+//
+//    @Bean
+//    public MigrationTask migrationTask(Database migrationDatabase)  {
+//        log.info("INIT MIGRATION TASK ...");
+//        return new MigrationTask(migrationDatabase, new MigrationRepository(MigrationRepository.DEFAULT_SCRIPT_PATH));
+//    }
 }

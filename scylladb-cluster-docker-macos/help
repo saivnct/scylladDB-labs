@@ -1,0 +1,28 @@
+I. Run Scylla cluter
+    cd scylladb-cluster-docker
+
+    Run DC 1:
+        docker-compose up -d
+        -> After roughly 60 seconds, the first datacenter, DC1, will be created
+
+    Run DC 2:
+        docker-compose -f docker-compose-dc2.yml up -d
+        -> After about 60 seconds, you should be able to see DC1 and DC2 when running the “nodetool status” command
+
+    Check Status:
+        docker exec -it scylla-node1 nodetool status
+
+    Create the Keyspace, with the Network Topology Strategy, and replication of  (‘DC1’: 3 => the replication factor of the Keyspace will be 5):
+    		docker exec -it scylla-node1 cqlsh
+
+    		CREATE KEYSPACE IF NOT EXISTS springdemo WITH replication = {'class':'NetworkTopologyStrategy', 'DC1' : 2} AND durable_writes = false;
+
+    		use springdemo;
+
+            DESCRIBE KEYSPACE
+
+
+    		CREATE TABLE IF NOT EXISTS springdemo.stocks (symbol text, date timestamp, value decimal, PRIMARY KEY (symbol, date)) WITH CLUSTERING ORDER BY (date DESC);
+    		ALTER TABLE springdemo.stocks WITH compaction = { 'class' : 'TimeWindowCompactionStrategy', 'compaction_window_unit' : 'DAYS',  'compaction_window_size' : 31 };
+            ALTER TABLE springdemo.stocks WITH default_time_to_live = 94608000;
+            exit

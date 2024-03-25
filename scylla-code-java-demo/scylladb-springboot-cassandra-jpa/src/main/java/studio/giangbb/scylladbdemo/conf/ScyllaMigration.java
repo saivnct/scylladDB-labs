@@ -14,13 +14,13 @@ import org.springframework.stereotype.Component;
 public class ScyllaMigration {
     private final Logger log = LoggerFactory.getLogger(ScyllaMigration.class);
 
-    @Autowired
-    private MigrationTask migrationTask;
+//    @Autowired
+//    private MigrationTask migrationTask;
 
     @PostConstruct
     public void run() {
         // Function logic to be executed on application startup after all beans are created
         log.info("ScyllaMigration ...");
-        migrationTask.migrate();
+//        migrationTask.migrate();
     }
 }
