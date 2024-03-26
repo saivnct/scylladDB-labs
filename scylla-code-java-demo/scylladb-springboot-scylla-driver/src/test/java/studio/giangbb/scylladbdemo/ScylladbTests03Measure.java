@@ -25,6 +25,7 @@ import studio.giangbb.scylladbdemo.models.ClientName;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -95,7 +96,6 @@ class ScylladbTests03Measure {
 	}
 
 
-
 	@Test
 	public void testDelete() {
 		long startTime = System.nanoTime();
@@ -133,15 +133,21 @@ class ScylladbTests03Measure {
 
 
 	@Test
-	public void testQuery() {
-		long count = clientDAO.countAll();
+	public void testUpdate() {
+		long startCount = clientDAO.countAll();
 
-		long startTime = System.nanoTime();
 		PagingIterable<Client> fetchClients = clientDAO.findAll();
 		List<Client> clients = new ArrayList<>();
-		assertThat(fetchClients.iterator().hasNext()).isEqualTo(true);
 		for (Client client : fetchClients) {
+			ClientInfo clientInfo = client.getClientInfo();
+			clientInfo.setAge(clientInfo.getAge() + 1);
 			clients.add(client);
+		}
+
+		logger.info("Wait for update completed...");
+		long startTime = System.nanoTime();
+		for (Client client : clients) {
+			clientDAO.save(client);
 		}
 		long endTime = System.nanoTime();
 
@@ -149,8 +155,85 @@ class ScylladbTests03Measure {
 		long duration = (endTime - startTime);  // compute the elapsed time in nanoseconds
 		logger.info("Execution time in milliSec: {}", duration/1000000);
 
+		long count = clientDAO.countAll();
+		assertThat(count).isEqualTo(startCount);
+	}
+
+
+	@Test
+	public void testQuery() {
+		long count = clientDAO.countAll();
+
+		long startTime = System.nanoTime();
+		PagingIterable<Client> fetchClients = clientDAO.findAll();
+		List<Client> clients = new ArrayList<>();
+		for (Client client : fetchClients) {
+			clients.add(client);
+		}
+		long endTime = System.nanoTime();
+
+		long duration = (endTime - startTime);  // compute the elapsed time in nanoseconds
+		logger.info("Execution time in milliSec: {}", duration/1000000);
 
 		Assertions.assertThat(count).isEqualTo(clients.size());
+	}
+
+
+	@Test
+	public void testFindByPrimKey(){
+		long startTime = System.nanoTime();
+		UUID uuid = UUID.fromString("09a46f49-eb26-11ee-9573-efd20a8cda87");
+		Client client = clientDAO.findByPrimKey(uuid);
+		long endTime = System.nanoTime();
+
+		long duration = (endTime - startTime);  // compute the elapsed time in nanoseconds
+		logger.info("Execution time in milliSec: {}", duration/1000000);
+
+		Assertions.assertThat(client.getId()).isEqualTo(uuid);
+	}
+
+	@Test
+	public void testFindByIndex_High_Selectivity(){
+		long startTime = System.nanoTime();
+		ClientName clientName = new ClientName("first_120", "last_33");
+		PagingIterable<Client> fetchClients = clientDAO.getByName(clientName);
+		List<Client> clients = new ArrayList<>();
+		for (Client client : fetchClients) {
+			clients.add(client);
+		}
+		long endTime = System.nanoTime();
+
+		long duration = (endTime - startTime);  // compute the elapsed time in nanoseconds
+		logger.info("Execution time in milliSec: {}", duration/1000000);
+
+
+		Assertions.assertThat(clients.size()).isGreaterThan(0);
+		logger.info("client {}", clients.size());
+		for (Client client: clients){
+			Assertions.assertThat(client.getClientName()).isEqualTo(clientName);
+		}
+	}
+
+
+	@Test
+	public void testFindByIndex_Low_Selectivity(){
+		long startTime = System.nanoTime();
+		Client.Role role = Client.Role.USER;
+		PagingIterable<Client> fetchClients = clientDAO.getByRole(role.ordinal());
+		List<Client> clients = new ArrayList<>();
+		for (Client client : fetchClients) {
+			clients.add(client);
+		}
+		long endTime = System.nanoTime();
+		long duration = (endTime - startTime);  // compute the elapsed time in nanoseconds
+		logger.info("Execution time in milliSec: {}", duration/1000000);
+
+
+		Assertions.assertThat(clients.size()).isGreaterThan(0);
+		logger.info("client {}", clients.size());
+		for (Client client: clients){
+			Assertions.assertThat(client.getRole()).isEqualTo(role.ordinal());
+		}
 	}
 
 

@@ -30,6 +30,7 @@ public class Client {
     @Column("client_info")
     private ClientInfo clientInfo;
 
+    @Indexed
     @Column("role")
     private int role;
     @Column("zones")

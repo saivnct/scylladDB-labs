@@ -1,30 +1,22 @@
 package studio.giangbb.scylladbdemo.conf;
 
-import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
+import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
-import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
-import org.cognitor.cassandra.migration.Database;
-import org.cognitor.cassandra.migration.MigrationConfiguration;
-import org.cognitor.cassandra.migration.MigrationRepository;
-import org.cognitor.cassandra.migration.MigrationTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.cassandra.config.AbstractCassandraConfiguration;
-import org.springframework.data.cassandra.config.CqlSessionFactoryBean;
 import org.springframework.data.cassandra.config.SchemaAction;
+import org.springframework.data.cassandra.config.SessionBuilderConfigurer;
+import org.springframework.data.cassandra.core.CassandraAdminTemplate;
+import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 import org.springframework.util.StringUtils;
 
-import java.net.InetSocketAddress;
-import java.util.Arrays;
-import java.util.List;
+import java.time.Duration;
 import java.util.Set;
 
 /**
@@ -49,7 +41,10 @@ public class ScyllaConfiguration extends AbstractCassandraConfiguration {
     protected String localDc;
 
     @Value("${spring.data.cassandra.consistency-level:LOCAL_QUORUM}")
-    protected String consistency;
+    protected String consistencyLevel;
+
+    @Value("${spring.data.cassandra.serial-consistency-level:LOCAL_SERIAL}")
+    protected String serialConsistencyLevel;
 
     @Value("${spring.data.cassandra.username}")
     protected String username;
@@ -86,6 +81,36 @@ public class ScyllaConfiguration extends AbstractCassandraConfiguration {
     @Override
     public String getLocalDataCenter() {
         return localDc;
+    }
+
+
+    @Override
+    public CassandraAdminTemplate cassandraTemplate() {
+        log.info("call cassandraTemplate");
+
+        CassandraAdminTemplate adminTemplate = super.cassandraTemplate();
+        CqlTemplate cqlTemplate = (CqlTemplate) adminTemplate.getCqlOperations();
+        cqlTemplate.setConsistencyLevel(DefaultConsistencyLevel.valueOf(consistencyLevel));
+        cqlTemplate.setSerialConsistencyLevel(DefaultConsistencyLevel.valueOf(serialConsistencyLevel));
+        return adminTemplate;
+    }
+
+
+    @Override
+    protected SessionBuilderConfigurer getSessionBuilderConfigurer() {
+        return new SessionBuilderConfigurer() {
+            @Override
+            public CqlSessionBuilder configure(CqlSessionBuilder cqlSessionBuilder) {
+                log.info("call Configuring CqlSession Builder");
+                return cqlSessionBuilder
+                        .withConfigLoader(DriverConfigLoader.programmaticBuilder()
+                                // Resolves the timeout query 'SELECT * FROM system_schema.tables' timed out after PT2S
+                                .withDuration(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT, Duration.ofMillis(60000))
+                                .withDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, Duration.ofMillis(60000))
+                                .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofMillis(15000))
+                                .build());
+            }
+        };
     }
 
 

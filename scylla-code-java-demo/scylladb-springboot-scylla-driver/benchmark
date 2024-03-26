@@ -1,61 +1,54 @@
------------------------1 NODE INSERT-----------------------
-List<Client> clientList = getDummyClientList(1, 100);
-Execution time in milliSec: 113
-Truncate - Execution time in milliSec: 301
-JPA:
-Execution time in milliSec: 175
-Truncate - Execution time in milliSec: 285
+TEST ENV:
+- 3 Node VM Host Only
+- 2vCPU + 2G
+- RF = 2, LOCAL_QUORUM
 
 
 
-List<Client> clientList = getDummyClientList(10, 100);
-Execution time in milliSec: 723
-Truncate - Execution time in milliSec: 310
-JPA:
-Execution time in milliSec: 1088
-Truncate - Execution time in milliSec: 293
-
-
-
-List<Client> clientList = getDummyClientList(10, 1000);
-Execution time in milliSec: 5275
-Truncate - Execution time in milliSec: 532
-JPA:
-Execution time in milliSec: 6140
-Truncate - Execution time in milliSec: 386
-
-
+-----------------------INSERT-----------------------
 List<Client> clientList = getDummyClientList(100, 1000);
-Execution time in milliSec: 43952
-Truncate - Execution time in milliSec: 1531
+Execution time in milliSec: 207484 (0), 209339 (200K), 208151 (500K)
 JPA:
-Execution time in milliSec: 47532
-Truncate - Execution time in milliSec: 1067
+Execution time in milliSec: 219269 (100K), 217808 (300K)
 
 
-
-
-
-
------------------------3 NODE INSERT-----------------------
-List<Client> clientList = getDummyClientList(100, 1000);
-Execution time in milliSec: 30051, 30025, 30500, 32822 (200k), 33356(400k)
-Truncate - Execution time in milliSec: 528, 447
+-----------------------UPDATE-----------------------
+500K
+Execution time in milliSec: 1173922
 JPA:
-Execution time in milliSec: 23416, 24784, 24808, 24851 (300k), 27246(500k)
-Truncate - Execution time in milliSec: 470, 468
+Execution time in milliSec: 1228397
 
 
 
-
------------------------3 NODE FIND ALL-----------------------
-600K
-
-Execution time in milliSec: 3811, 3754, 3820
+-----------------------FIND ALL-----------------------
+500K
+Execution time in milliSec: 14876, 14863, 15225
 JPA:
-Execution time in milliSec: 5858, 5656
+Execution time in milliSec: 21231, 20921, 20934
 
 
+-----------------------FIND BY PRIM KEY-----------------------
+500K
+Execution time in milliSec: 15, 15, 15
+JPA:
+Execution time in milliSec: 58, 66, 56
+
+
+
+-----------------------FIND BY INDEX - HIGH SELECTIVITY-----------------------
+5/500K
+
+Execution time in milliSec: 23, 26, 23
+JPA:
+Execution time in milliSec: 126, 83, 81
+
+
+-----------------------FIND BY INDEX - LOW SELECTIVITY-----------------------
+495K/500K
+
+Execution time in milliSec: 22950, 21117, 21559
+JPA:
+Execution time in milliSec: 30899, 27586, 28230
 
 
 

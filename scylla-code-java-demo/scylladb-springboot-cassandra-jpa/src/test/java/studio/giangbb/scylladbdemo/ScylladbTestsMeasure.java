@@ -1,8 +1,10 @@
 package studio.giangbb.scylladbdemo;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -18,6 +20,7 @@ import studio.giangbb.scylladbdemo.models.ClientName;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -71,8 +74,6 @@ class ScylladbTestsMeasure {
 		Metadata metadata =  cqlSession.getMetadata();
 		logger.info("Connected session {}", cqlSession.getName());
 
-
-
 		for (Node node : metadata.getNodes().values()) {
 			logger.info("Node session {}, Datatacenter: {}; Host: {}; Rack: {}", node.getEndPoint().resolve(),
 					node.getDatacenter(), node.getEndPoint(), node.getRack());
@@ -121,6 +122,36 @@ class ScylladbTestsMeasure {
 		AssertionsForClassTypes.assertThat(count).isEqualTo(clientList.size() + startCount);
 	}
 
+	@Test
+	public void testUpdate() {
+		long startCount = clientDAO.countAll();
+
+		List<Client> fetchClients = clientDAO.findAll();
+		List<Client> clients = new ArrayList<>();
+		for (Client client : fetchClients) {
+			ClientInfo clientInfo = client.getClientInfo();
+			clientInfo.setAge(clientInfo.getAge() + 1);
+			clients.add(client);
+		}
+
+		logger.info("Wait for update completed...");
+		long startTime = System.nanoTime();
+		for (Client client : clients) {
+			clientDAO.save(client);
+		}
+		long endTime = System.nanoTime();
+
+
+		long duration = (endTime - startTime);  // compute the elapsed time in nanoseconds
+		logger.info("Execution time in milliSec: {}", duration/1000000);
+
+		long count = clientDAO.countAll();
+		AssertionsForClassTypes.assertThat(count).isEqualTo(startCount);
+	}
+
+
+
+
 
 	@Test
 	public void testQuery() {
@@ -130,12 +161,60 @@ class ScylladbTestsMeasure {
 		List<Client> fetchClients = clientDAO.findAll();
 		long endTime = System.nanoTime();
 
+		long duration = (endTime - startTime);  // compute the elapsed time in nanoseconds
+		logger.info("Execution time in milliSec: {}", duration/1000000);
+
+		assertThat(count).isEqualTo(fetchClients.size());
+	}
+
+	@Test
+	public void testFindByPrimKey(){
+		long startTime = System.nanoTime();
+		UUID uuid = UUID.fromString("09a46f49-eb26-11ee-9573-efd20a8cda87");
+		Client client = clientDAO.getByKey(uuid);
+		long endTime = System.nanoTime();
+
+		long duration = (endTime - startTime);  // compute the elapsed time in nanoseconds
+		logger.info("Execution time in milliSec: {}", duration/1000000);
+
+		Assertions.assertThat(client.getId()).isEqualTo(uuid);
+	}
+
+
+	@Test
+	public void testFindByIndex_High_Selectivity(){
+		long startTime = System.nanoTime();
+		ClientName clientName = new ClientName("first_120", "last_33");
+		List<Client> fetchClients  = clientDAO.findAllByName(clientName);
+		long endTime = System.nanoTime();
 
 		long duration = (endTime - startTime);  // compute the elapsed time in nanoseconds
 		logger.info("Execution time in milliSec: {}", duration/1000000);
 
 
-		assertThat(count).isEqualTo(fetchClients.size());
+		Assertions.assertThat(fetchClients.size()).isGreaterThan(0);
+		logger.info("client {}", fetchClients.size());
+		for (Client client: fetchClients){
+			Assertions.assertThat(client.getClientName()).isEqualTo(clientName);
+		}
 	}
 
+
+	@Test
+	public void testFindByIndex_Low_Selectivity(){
+		long startTime = System.nanoTime();
+		Client.Role role = Client.Role.USER;
+		List<Client> fetchClients  = clientDAO.findAllByRole(role);
+		long endTime = System.nanoTime();
+
+		long duration = (endTime - startTime);  // compute the elapsed time in nanoseconds
+		logger.info("Execution time in milliSec: {}", duration/1000000);
+
+
+		Assertions.assertThat(fetchClients.size()).isGreaterThan(0);
+		logger.info("client {}", fetchClients.size());
+		for (Client client: fetchClients){
+			Assertions.assertThat(client.getRole()).isEqualTo(role.ordinal());
+		}
+	}
 }
