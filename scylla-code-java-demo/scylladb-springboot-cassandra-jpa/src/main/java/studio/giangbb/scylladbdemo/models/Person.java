@@ -10,9 +10,7 @@ import studio.giangbb.scylladbdemo.utils.DateUtil;
 import java.net.InetAddress;
 import java.util.*;
 
-/**
- * Created by Giangbb on 01/03/2024
- */
+
 
 /*
 * NOTE:
@@ -22,13 +20,13 @@ import java.util.*;
 * 3. must declare @UserDefinedType for UDT -> Once UDT created, sping-data cannot modify automatically (add field, remove field, change type)
 * 4. can add @Indexed later => after adding @Indexed, spring-data cannot remove it automatically
 * */
+
+/**
+ * Created by Giangbb on 01/03/2024
+ */
 @Table()
 public class Person {
-    public enum Job {
-        STUDENT,
-        TEACHER,
-        ENGINEER
-    };
+    public enum Job {STUDENT, TEACHER, ENGINEER};
 
     @PrimaryKey("id")
 //    @Id
@@ -53,11 +51,14 @@ public class Person {
 
     private Date createAt;
 
-
-    //NOTE: must have null constructor or all-args constructor
     public Person() {
     }
 
+    //GETTER AND SETTER ...
+
+
+
+    //NOTE: must have null constructor or all-args constructor
     public Person(PersonName name, int age, Job job, String email) {
         this.id = Uuids.timeBased();
         this.name = name;

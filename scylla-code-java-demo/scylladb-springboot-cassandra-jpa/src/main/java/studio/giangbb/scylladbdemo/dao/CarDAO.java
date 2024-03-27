@@ -15,13 +15,11 @@ import java.util.List;
 import static org.springframework.data.cassandra.core.query.Criteria.where;
 
 /**
- * Created by giangbb on 26/06/2023
+ * Created by giangbb on 26/03/2023
  */
-
 @Component
 @Qualifier("carDAO")
 public class CarDAO extends AbstractScyllaDAO<Car.Key, Car> {
-
     @Autowired
     public CarDAO(CassandraOperations cassandraOperations) {
         super(cassandraOperations, Car.Key.class, Car.class);

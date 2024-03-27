@@ -73,6 +73,8 @@ public class Car{
         this.year = year;
     }
 
+    //GETTER AND SETTER
+
 
     public Key getKey() {
         return key;

@@ -52,7 +52,6 @@ class ScylladbTests03UsingAbstractScyllaDAO {
 			CompletableFuture<Person> completableFuture = CompletableFuture.supplyAsync(() -> {
 				long threadId = Thread.currentThread().getId();
 				logger.info("insert Person: {} - threadId: {}", person.getId().toString(), threadId);
-
 				Person personInsert = personDAO.save(person);
 				assertThat(person).isEqualTo(personInsert);
 				return personInsert;

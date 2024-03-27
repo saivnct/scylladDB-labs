@@ -5,11 +5,12 @@ import (
 	"giangbb.studio/scylladb/dao"
 	"giangbb.studio/scylladb/entity"
 	"giangbb.studio/scylladb/entity/udt"
+	"github.com/gocql/gocql"
 	"github.com/gookit/color"
 	"github.com/joho/godotenv"
-	"github.com/saivnct/gocqlx-orm/connection"
-	cqlxoDAO "github.com/saivnct/gocqlx-orm/dao"
-	cqlxoEntity "github.com/saivnct/gocqlx-orm/entity"
+	cqlxo_connection "github.com/saivnct/gocqlx-orm/connection"
+	"github.com/saivnct/gocqlx-orm/dao"
+	"github.com/saivnct/gocqlx-orm/entity"
 	"log"
 	"os"
 	"strconv"
@@ -40,8 +41,10 @@ func main() {
 	}
 
 	localDC := os.Getenv("SCYLLA_LOCAL_DC")
+	cl := os.Getenv("SCYLLA_CONSISTENCY_LV")
 
-	_, sessionP, err := cqlxo_connection.CreateCluster(hosts, keyspace, localDC, clusterTimeout, numRetries)
+	_, sessionP, err := cqlxo_connection.CreateCluster(hosts, keyspace, gocql.ParseConsistency(cl), localDC, clusterTimeout, numRetries)
+
 	if err != nil {
 		log.Fatal(color.Red.Sprintf("❌ Unable to connect to scylla: %v", err))
 	}
