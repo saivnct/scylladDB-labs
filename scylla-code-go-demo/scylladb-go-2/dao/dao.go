@@ -6,15 +6,26 @@ import (
 )
 
 var (
-	personDAO *PersonDAO
+	employeeDAO *EmployeeDAO
+	clientDAO   *ClientDAO
 )
 
 func InitDAOs(session gocqlx.Session) error {
-	personDAO = &PersonDAO{}
-	err := personDAO.InitDAO(session, entity.Person{})
+	employeeDAO = &EmployeeDAO{}
+	err := employeeDAO.InitDAO(session, entity.Employee{})
+	if err != nil {
+		return err
+	}
+
+	clientDAO = &ClientDAO{}
+	err = clientDAO.InitDAO(session, entity.Client{})
 	return err
 }
 
-func GetPersonDAO() *PersonDAO {
-	return personDAO
+func GetEmployeeDAO() *EmployeeDAO {
+	return employeeDAO
+}
+
+func GetClientDAO() *ClientDAO {
+	return clientDAO
 }

@@ -4,6 +4,8 @@ DESCRIBE KEYSPACE
 DESCRIBE TABLES
 
 
+CREATE KEYSPACE springdemo WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', 'replication_factor' : 2};
+
 java:
 run scylla-springboot2 test ScylladbDemoApplicationTests3
 

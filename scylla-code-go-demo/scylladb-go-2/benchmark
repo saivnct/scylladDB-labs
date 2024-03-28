@@ -1,0 +1,57 @@
+TEST ENV:
+- 1 Node VM Host Only
+- 1vCPU + 1G
+
+
+
+-----------------------INSERT-----------------------
+List<Client> clientList = getDummyClientList(100, 1000);
+Execution time in milliSec: 114785ms
+JPA:
+Execution time in milliSec: 18891ms
+
+
+-----------------------UPDATE-----------------------
+100K
+Execution time in milliSec: 119103ms
+JPA:
+Execution time in milliSec: 18640ms
+
+
+
+-----------------------FIND ALL-----------------------
+500K
+Execution time in milliSec: 2604ms
+JPA:
+Execution time in milliSec: 4663ms
+
+
+-----------------------FIND BY PRIM KEY-----------------------
+500K
+Execution time in milliSec: 1ms
+JPA:
+Execution time in milliSec: 31ms
+
+
+
+-----------------------FIND BY INDEX - HIGH SELECTIVITY-----------------------
+5/500K
+
+Execution time in milliSec: 2ms
+JPA:
+Execution time in milliSec: 31ms
+
+
+-----------------------FIND BY INDEX - LOW SELECTIVITY-----------------------
+495K/500K
+
+Execution time in milliSec: 4279ms
+JPA:
+Execution time in milliSec: 6301ms
+
+
+
+
+
+
+

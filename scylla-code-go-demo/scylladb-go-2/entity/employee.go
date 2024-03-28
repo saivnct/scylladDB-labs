@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Person struct {
+type Employee struct {
 	LastName       string            `db:"last_name" pk:"2" index:"true"`
 	FirstName      string            `pk:"1" index:"true"` // not declare db:"first_name" -> default db:"first_name"
 	FavoritePlace  udt.FavoritePlace `db:"favorite_place"`
@@ -16,6 +16,6 @@ type Person struct {
 	CreatedAt      time.Time `db:"created_at" ck:"1"`
 }
 
-func (p Person) TableName() string {
-	return "person"
+func (p Employee) TableName() string {
+	return "employee"
 }

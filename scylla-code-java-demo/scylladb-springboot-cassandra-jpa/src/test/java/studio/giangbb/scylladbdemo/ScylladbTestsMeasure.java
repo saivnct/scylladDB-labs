@@ -170,7 +170,7 @@ class ScylladbTestsMeasure {
 	@Test
 	public void testFindByPrimKey(){
 		long startTime = System.nanoTime();
-		UUID uuid = UUID.fromString("09a46f49-eb26-11ee-9573-efd20a8cda87");
+		UUID uuid = UUID.fromString("957ab028-ecad-11ee-afd9-02b8e97fa0d5");
 		Client client = clientDAO.getByKey(uuid);
 		long endTime = System.nanoTime();
 

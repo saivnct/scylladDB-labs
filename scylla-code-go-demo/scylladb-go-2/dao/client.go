@@ -4,6 +4,6 @@ import (
 	"github.com/saivnct/gocqlx-orm/dao"
 )
 
-type PersonDAO struct {
+type ClientDAO struct {
 	cqlxoDAO.DAO
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/gookit/color"
 	"github.com/joho/godotenv"
-	cqlxo_connection "github.com/saivnct/gocqlx-orm/connection"
-	"github.com/saivnct/gocqlx-orm/dao"
+	"github.com/saivnct/gocqlx-orm/connection"
+	cqlxoDAO "github.com/saivnct/gocqlx-orm/dao"
 	"github.com/saivnct/gocqlx-orm/entity"
 	"log"
 	"os"
@@ -57,11 +57,11 @@ func main() {
 	dao.InitDAOs(session)
 
 	////// Working with entity
-	personDAO := dao.GetPersonDAO()
+	employeeDAO := dao.GetEmployeeDAO()
 
-	var personEntities []cqlxoEntity.BaseModelInterface
+	var employeeEntities []cqlxoEntity.BaseModelInterface
 	for i := 0; i < 10; i++ {
-		person := entity.Person{
+		employee := entity.Employee{
 			LastName:  fmt.Sprintf("first%d", i),
 			FirstName: fmt.Sprintf("last%d", i),
 			FavoritePlace: udt.FavoritePlace{
@@ -78,122 +78,121 @@ func main() {
 			CreatedAt:      time.Now(),
 		}
 
-		personEntities = append(personEntities, person)
+		employeeEntities = append(employeeEntities, employee)
 	}
 
-	err = personDAO.SaveMany(personEntities)
+	err = employeeDAO.SaveMany(employeeEntities)
 	if err != nil {
-		log.Fatal(color.Red.Sprintf("❌ Unable to save person -> %v", err))
+		log.Fatal(color.Red.Sprintf("❌ Unable to save employee -> %v", err))
 	}
 
 	findAll()
-	findWithPrimKey(personEntities[0].(entity.Person).FirstName, personEntities[0].(entity.Person).LastName, personEntities[0].(entity.Person).CreatedAt)
-	findWithPartKey(personEntities[0].(entity.Person).FirstName, personEntities[0].(entity.Person).LastName)
-	findWithIndex(personEntities[0].(entity.Person).FirstName)
-	findWithIndexWithPagination(personEntities[0].(entity.Person).FirstName)
+	findWithPrimKey(employeeEntities[0].(entity.Employee).FirstName, employeeEntities[0].(entity.Employee).LastName, employeeEntities[0].(entity.Employee).CreatedAt)
+	findWithPartKey(employeeEntities[0].(entity.Employee).FirstName, employeeEntities[0].(entity.Employee).LastName)
+	findWithIndex(employeeEntities[0].(entity.Employee).FirstName)
+	findWithIndexWithPagination(employeeEntities[0].(entity.Employee).FirstName)
 }
 
 func findAll() {
-	mfindAll := func(personDao *dao.PersonDAO) ([]entity.Person, error) {
-		var personArr []entity.Person
-		err := personDao.FindAll(&personArr)
-		return personArr, err
+	mfindAll := func(employeeDAO *dao.EmployeeDAO) ([]entity.Employee, error) {
+		var employeeArr []entity.Employee
+		err := employeeDAO.FindAll(&employeeArr)
+		return employeeArr, err
 	}
 
-	persons, err := mfindAll(dao.GetPersonDAO())
+	employees, err := mfindAll(dao.GetEmployeeDAO())
 	if err != nil {
-		log.Fatal(color.Red.Sprintf("❌ Unable to get persons -> %v", err))
+		log.Fatal(color.Red.Sprintf("❌ Unable to get employees -> %v", err))
 	}
 
-	log.Println("findAll - persons", persons)
+	log.Println("✅ findAll - employees", employees)
 }
 
 func findWithPrimKey(firstName string, lastName string, createdAt time.Time) {
-	mfindWithPrimKey := func(personDAO *dao.PersonDAO, firstName string, lastName string, createdAt time.Time) (*entity.Person, error) {
-		var personArr []entity.Person
-		err := personDAO.FindByPrimaryKey(entity.Person{
+	mfindWithPrimKey := func(employeeDAO *dao.EmployeeDAO, firstName string, lastName string, createdAt time.Time) (*entity.Employee, error) {
+		var employeeArr []entity.Employee
+		err := employeeDAO.FindByPrimaryKey(entity.Employee{
 			FirstName: firstName,
 			LastName:  lastName,
 			CreatedAt: createdAt,
-		}, &personArr)
+		}, &employeeArr)
 
 		if err != nil {
 			return nil, err
 		}
-		if len(personArr) == 0 {
+		if len(employeeArr) == 0 {
 			return nil, nil
 		}
-		return &personArr[0], nil
+		return &employeeArr[0], nil
 	}
 
-	person, err := mfindWithPrimKey(dao.GetPersonDAO(), firstName, lastName, createdAt)
+	employee, err := mfindWithPrimKey(dao.GetEmployeeDAO(), firstName, lastName, createdAt)
 	if err != nil {
-		log.Fatal(color.Red.Sprintf("❌ Unable to get person -> %v", err))
+		log.Fatal(color.Red.Sprintf("❌ Unable to get employee -> %v", err))
 		return
 	}
-	log.Println("findWithPrimKey - person", person)
+	log.Println("✅ findWithPrimKey - employee", employee)
 }
 
 func findWithPartKey(firstName string, lastName string) {
-	mfindWithPartKey := func(personDAO *dao.PersonDAO, firstName string, lastName string) ([]entity.Person, error) {
-		var personArr []entity.Person
-		err := personDAO.FindByPartitionKey(entity.Person{
+	mfindWithPartKey := func(employeeDAO *dao.EmployeeDAO, firstName string, lastName string) ([]entity.Employee, error) {
+		var employeeArr []entity.Employee
+		err := employeeDAO.FindByPartitionKey(entity.Employee{
 			FirstName: firstName,
 			LastName:  lastName,
-		}, &personArr)
+		}, &employeeArr)
 
-		return personArr, err
+		return employeeArr, err
 	}
 
-	//persons, err = mfindWithPartKey(personDAO, personEntities[0].(entity.Person).FirstName, personEntities[0].(entity.Person).LastName)
-	persons, err := mfindWithPartKey(dao.GetPersonDAO(), firstName, lastName)
+	employees, err := mfindWithPartKey(dao.GetEmployeeDAO(), firstName, lastName)
 	if err != nil {
-		log.Fatal(color.Red.Sprintf("❌ Unable to get persons -> %v", err))
+		log.Fatal(color.Red.Sprintf("❌ Unable to get employees -> %v", err))
 		return
 	}
-	log.Println("findWithPartKey - persons", persons)
+	log.Println("✅ findWithPartKey - employees", employees)
 }
 
 func findWithIndex(firstName string) {
-	mfindWithIndex := func(personDAO *dao.PersonDAO, firstName string) ([]entity.Person, error) {
-		var personArr []entity.Person
-		err := personDAO.Find(entity.Person{
+	mfindWithIndex := func(employeeDAO *dao.EmployeeDAO, firstName string) ([]entity.Employee, error) {
+		var employeeArr []entity.Employee
+		err := employeeDAO.Find(entity.Employee{
 			FirstName: firstName,
-		}, false, &personArr)
-		return personArr, err
+		}, false, &employeeArr)
+		return employeeArr, err
 	}
 
-	persons, err := mfindWithIndex(dao.GetPersonDAO(), firstName)
+	employees, err := mfindWithIndex(dao.GetEmployeeDAO(), firstName)
 	if err != nil {
-		log.Fatal(color.Red.Sprintf("❌ Unable to get persons -> %v", err))
+		log.Fatal(color.Red.Sprintf("❌ Unable to get employees -> %v", err))
 		return
 	}
-	log.Println("findWithIndex - persons", persons)
+	log.Println("✅ findWithIndex - employees", employees)
 }
 
 func findWithIndexWithPagination(firstName string) {
-	findWithPagination := func(personDAO *dao.PersonDAO, firstName string, itemsPerPage int) ([]entity.Person, error) {
+	findWithPagination := func(employeeDAO *dao.EmployeeDAO, firstName string, itemsPerPage int) ([]entity.Employee, error) {
 		var (
-			personArr []entity.Person
-			page      []byte
+			employeeArr []entity.Employee
+			page        []byte
 		)
 		for i := 0; ; i++ {
-			var mPersons []entity.Person
+			var mEmployees []entity.Employee
 
-			nextPage, err := personDAO.FindWithOption(entity.Person{
+			nextPage, err := employeeDAO.FindWithOption(entity.Employee{
 				FirstName: firstName,
 			}, cqlxoDAO.QueryOption{
 				Page:         page,
 				ItemsPerPage: itemsPerPage,
-			}, &mPersons)
+			}, &mEmployees)
 
 			if err != nil {
 				return nil, err
 			}
 
-			personArr = append(personArr, mPersons...)
+			employeeArr = append(employeeArr, mEmployees...)
 
-			log.Printf("Page: %d -  items: %d \n", i, len(mPersons))
+			log.Printf("Page: %d -  items: %d \n", i, len(mEmployees))
 
 			page = nextPage
 			if len(nextPage) == 0 {
@@ -201,13 +200,13 @@ func findWithIndexWithPagination(firstName string) {
 			}
 		}
 
-		return personArr, nil
+		return employeeArr, nil
 	}
 
-	persons, err := findWithPagination(dao.GetPersonDAO(), firstName, 5)
+	employees, err := findWithPagination(dao.GetEmployeeDAO(), firstName, 5)
 	if err != nil {
-		log.Fatal(color.Red.Sprintf("❌ Unable to get persons -> %v", err))
+		log.Fatal(color.Red.Sprintf("❌ Unable to get employees -> %v", err))
 		return
 	}
-	log.Println("findWithIndexWithPagination - persons", persons)
+	log.Println("✅ findWithIndexWithPagination - employees", employees)
 }
