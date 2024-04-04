@@ -16,11 +16,15 @@ public class Car{
         @PrimaryKeyColumn(name = "brand", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
         private String brand;
 
-        @PrimaryKeyColumn(name = "model", ordinal = 1, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+        @PrimaryKeyColumn(name = "sub_brand", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+        private String subBrand;
+
+        @PrimaryKeyColumn(name = "model", ordinal = 2, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
         private String model;
 
-        public Key(String brand, String model) {
+        public Key(String brand, String subBrand, String model) {
             this.brand = brand;
+            this.subBrand = subBrand;
             this.model = model;
         }
 
@@ -30,6 +34,14 @@ public class Car{
 
         public void setBrand(String brand) {
             this.brand = brand;
+        }
+
+        public String getSubBrand() {
+            return subBrand;
+        }
+
+        public void setSubBrand(String subBrand) {
+            this.subBrand = subBrand;
         }
 
         public String getModel() {
@@ -45,7 +57,7 @@ public class Car{
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Key key = (Key) o;
-            return Objects.equals(brand, key.brand) && Objects.equals(model, key.model);
+            return Objects.equals(brand, key.brand) && Objects.equals(subBrand, key.subBrand) && Objects.equals(model, key.model);
         }
 
         @Override

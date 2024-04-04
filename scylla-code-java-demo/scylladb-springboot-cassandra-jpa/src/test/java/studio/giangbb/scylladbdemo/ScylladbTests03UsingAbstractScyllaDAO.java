@@ -115,6 +115,8 @@ class ScylladbTests03UsingAbstractScyllaDAO {
 
 		Map<String, List<Car>> carMap = getDummyCarMap();
 		List<Car> carList = carMap.values().stream().flatMap(List::stream).collect(Collectors.toList());
+		logger.info("carList size: {}", carList.size());
+
 
 		List<CompletableFuture<Car>> futures = new ArrayList<>();
 		for (Car car : carList) {
@@ -153,8 +155,11 @@ class ScylladbTests03UsingAbstractScyllaDAO {
 
 		//find with partition key
 		String brand = carList.get(0).getKey().getBrand();
-		fetchCars = carDAO.findAllByBrand(brand);
-		assertThat(fetchCars.size()).isEqualTo(carMap.get(brand).size());
+		String subBrand = carList.get(0).getKey().getSubBrand();
+		String pk = String.format("%s_%s", brand, subBrand);
+
+		fetchCars = carDAO.findAllByPK(brand,subBrand);
+		assertThat(fetchCars.size()).isEqualTo(carMap.get(pk).size());
 
 		//find with pagination
 		fetchCars = new ArrayList<>();

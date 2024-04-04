@@ -24,7 +24,7 @@ public interface CarRepository extends CassandraRepository<Car, Car.Key>, CarRep
     List<Car> findAllByKey_Brand(String brand);
 
     //find by PK - using @Query
-    @Query("SELECT * FROM car WHERE brand = :brand")
-    List<Car> findAllByBrand(@Param("brand") String brand);
+    @Query("SELECT * FROM car WHERE brand = :brand AND sub_brand = :subBrand")
+    List<Car> findAllByPK(@Param("brand") String brand, @Param("subBrand") String subBrand);
 
 }

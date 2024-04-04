@@ -11,4 +11,7 @@ public interface DaoMapper {
 
     @DaoFactory
     ClientDao clientDao();
+
+    @DaoFactory
+    CarDao carDao();
 }

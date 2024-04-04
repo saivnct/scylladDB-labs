@@ -10,8 +10,8 @@ services:
       - 9180:9180
     restart: always
     command: --smp 1 --memory 1G --overprovisioned 1 --api-address 0.0.0.0
-    volumes:
-      - ./scylla_data_node1:/var/lib/scylla
+    #volumes:
+    #  - ./scylla_data_node1:/var/lib/scylla
     networks:
       - scylla-network
       

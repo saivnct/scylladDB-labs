@@ -6,7 +6,6 @@ import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.data.cassandra.core.query.Query;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Component;
 import studio.giangbb.scylladbdemo.models.Car;
 
@@ -25,10 +24,11 @@ public class CarDAO extends AbstractScyllaDAO<Car.Key, Car> {
         super(cassandraOperations, Car.Key.class, Car.class);
     }
 
-    public List<Car> findAllByBrand(String brand){
+    public List<Car> findAllByPK(String brand, String subBrand){
         return this.find(
                 Query.query(
-                        where("brand").is(brand)
+                        where("brand").is(brand),
+                        where("sub_brand").is(subBrand)
                 )
         );
     }

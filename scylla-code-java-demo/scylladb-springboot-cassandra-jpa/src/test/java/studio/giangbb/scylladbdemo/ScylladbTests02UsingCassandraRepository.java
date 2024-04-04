@@ -163,8 +163,11 @@ class ScylladbTests02UsingCassandraRepository {
 
 		//find with partition key
 		String brand = carList.get(0).getKey().getBrand();
-		fetchCars = carRepository.findAllByBrand(brand);
-		assertThat(fetchCars.size()).isEqualTo(carMap.get(brand).size());
+		String subBrand = carList.get(0).getKey().getSubBrand();
+		String pk = String.format("%s_%s", brand, subBrand);
+
+		fetchCars = carRepository.findAllByPK(brand,subBrand);
+		assertThat(fetchCars.size()).isEqualTo(carMap.get(pk).size());
 
 		//find with partition key - V2
 //		String brand = carList.get(0).getKey().getBrand();

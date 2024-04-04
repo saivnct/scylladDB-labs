@@ -46,6 +46,9 @@ public class ScyllaConfiguration extends AbstractCassandraConfiguration {
     @Value("${spring.data.cassandra.contact-points}")
     protected String contactPoints;
 
+    @Value("${spring.data.cassandra.schema-action}")
+    protected String schemaActions;
+
     @Value("${spring.data.cassandra.port:9042}")
     protected Integer port;
 
@@ -95,7 +98,7 @@ public class ScyllaConfiguration extends AbstractCassandraConfiguration {
 
     @Override
     public SchemaAction getSchemaAction() {
-        return SchemaAction.CREATE_IF_NOT_EXISTS;
+        return SchemaAction.valueOf(schemaActions);
     }
 
     @Override

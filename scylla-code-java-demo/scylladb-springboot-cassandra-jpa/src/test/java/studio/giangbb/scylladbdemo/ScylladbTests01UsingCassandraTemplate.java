@@ -64,13 +64,20 @@ class ScylladbTests01UsingCassandraTemplate {
 		for (int i = 0; i < n; i++) {
 			String make = i % 2 == 0 ? "Japan" : "USA";
 			String brand = String.format("brand_%d", i);
-			List<Car> carList= new ArrayList<>();
-			for (int j = 0; j < m; j++){
-				Car.Key key = new Car.Key(String.format("brand_%d", i), String.format("model_%d", j));
-				Car car = new Car(key, make, 2000+i);
-				carList.add(car);
+
+
+			for (int j = 0; j < n/2; j++) {
+				String subBrand = String.format("subBrand_%d", j);
+				List<Car> carList= new ArrayList<>();
+				for (int k = 0; k < m; k++){
+					Car.Key key = new Car.Key(brand, subBrand, String.format("model_%d", k));
+					Car car = new Car(key, make, 2000+i);
+					carList.add(car);
+				}
+
+				String pk = String.format("%s_%s", brand, subBrand);
+				carMap.put(pk, carList);
 			}
-			carMap.put(brand, carList);
 		}
 
 		return carMap;
