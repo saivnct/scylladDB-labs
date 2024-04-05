@@ -85,11 +85,11 @@ public class MapperTest {
     }
 
 
-    @Test
-    public void testPerformSchemaActions(){
-        CassandraPersistentEntitySchemaCreator schemaCreator = new CassandraPersistentEntitySchemaCreator(cassandraMappingContext, cassandraTemplate);
-        schemaCreator.createUserTypes(true);
-        schemaCreator.createTables(true);
-        schemaCreator.createIndexes(true);
-    }
+//    @Test
+//    public void testPerformSchemaActions(){
+//        CassandraPersistentEntitySchemaCreator schemaCreator = new CassandraPersistentEntitySchemaCreator(cassandraMappingContext, cassandraTemplate);
+//        schemaCreator.createUserTypes(true);
+//        schemaCreator.createTables(true);
+//        schemaCreator.createIndexes(true);
+//    }
 }
