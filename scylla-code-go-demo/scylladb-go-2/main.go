@@ -86,11 +86,12 @@ func main() {
 		log.Fatal(color.Red.Sprintf("❌ Unable to save employee -> %v", err))
 	}
 
-	findAll()
-	findWithPrimKey(employeeEntities[0].(entity.Employee).FirstName, employeeEntities[0].(entity.Employee).LastName, employeeEntities[0].(entity.Employee).CreatedAt)
-	findWithPartKey(employeeEntities[0].(entity.Employee).FirstName, employeeEntities[0].(entity.Employee).LastName)
-	findWithIndex(employeeEntities[0].(entity.Employee).FirstName)
-	findWithIndexWithPagination(employeeEntities[0].(entity.Employee).FirstName)
+	//findAll()
+	//findWithPrimKey(employeeEntities[0].(entity.Employee).FirstName, employeeEntities[0].(entity.Employee).LastName, employeeEntities[0].(entity.Employee).CreatedAt)
+	//findWithPartKey(employeeEntities[0].(entity.Employee).FirstName, employeeEntities[0].(entity.Employee).LastName)
+	//findWithIndex(employeeEntities[0].(entity.Employee).FirstName)
+	findWithAllowFiltering(employeeEntities[0].(entity.Employee).StaticIP)
+	//findWithIndexWithPagination(employeeEntities[0].(entity.Employee).FirstName)
 }
 
 func findAll() {
@@ -168,6 +169,23 @@ func findWithIndex(firstName string) {
 		return
 	}
 	log.Println("✅ findWithIndex - employees", employees)
+}
+
+func findWithAllowFiltering(staticIP string) {
+	mfindWithAllowFiltering := func(employeeDAO *dao.EmployeeDAO, staticIP string) ([]entity.Employee, error) {
+		var employeeArr []entity.Employee
+		err := employeeDAO.Find(entity.Employee{
+			StaticIP: staticIP,
+		}, true, &employeeArr)
+		return employeeArr, err
+	}
+
+	employees, err := mfindWithAllowFiltering(dao.GetEmployeeDAO(), staticIP)
+	if err != nil {
+		log.Fatal(color.Red.Sprintf("❌ Unable to get employees -> %v", err))
+		return
+	}
+	log.Println("✅ findWithAllowFiltering - employees", employees)
 }
 
 func findWithIndexWithPagination(firstName string) {

@@ -10,7 +10,7 @@ import java.util.Objects;
  * Created by Giangbb on 04/04/2024
  */
 @Entity
-public class Car {
+public class Car extends Trasportation{
     @PartitionKey(0)
     private String brand;
 

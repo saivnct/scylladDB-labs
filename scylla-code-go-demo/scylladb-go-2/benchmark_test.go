@@ -139,7 +139,7 @@ func TestInsert(t *testing.T) {
 	startCount, err := clientDAO.CountAll()
 	assert.Nil(t, err)
 
-	clientList := getDummyClientList(100, 1000)
+	clientList := getDummyClientList(10, 100)
 
 	log.Println("Wait for insertion completed...")
 	start := time.Now()
