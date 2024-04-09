@@ -9,8 +9,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import studio.giangbb.scylladbdemo.dao.CarDAO;
+import studio.giangbb.scylladbdemo.dao.ClientDAO;
 import studio.giangbb.scylladbdemo.dao.PersonDAO;
 import studio.giangbb.scylladbdemo.models.Car;
+import studio.giangbb.scylladbdemo.models.Client;
 import studio.giangbb.scylladbdemo.models.Person;
 import studio.giangbb.scylladbdemo.models.PersonName;
 
@@ -35,11 +37,14 @@ class ScylladbTests03UsingAbstractScyllaDAO {
 	@Autowired
 	private PersonDAO personDAO;
 
+	@Autowired
+	private ClientDAO clientDAO;
+
 	private final Logger logger = LoggerFactory.getLogger(ScylladbTests03UsingAbstractScyllaDAO.class);
 
 
 	@Test
-	public void testPersonWithCassandraRepository() throws UnknownHostException, ExecutionException, InterruptedException {
+	public void testPersonWithAbstractScyllaDAO() throws UnknownHostException, ExecutionException, InterruptedException {
 		//delete all
 		personDAO.deleteAll();
 
@@ -106,7 +111,7 @@ class ScylladbTests03UsingAbstractScyllaDAO {
 
 
 	@Test
-	public void testCarWithCassandraRepository() throws ExecutionException, InterruptedException {
+	public void testCarWithAbstractScyllaDAO() throws ExecutionException, InterruptedException {
 		//delete all
 		carDAO.deleteAll();
 
@@ -195,12 +200,21 @@ class ScylladbTests03UsingAbstractScyllaDAO {
 		}
 		assertThat(fetchCars.size()).isEqualTo(
 				carList.stream()
-						.filter(car -> car.getYear() == year)
+						.filter(car -> car.getKey().getYear() == year)
 						.count()
 		);
 		for (Car car: fetchCars){
-			logger.info("car: {} - {}", car.getKey(), car.getYear());
+			logger.info("car: {}", car.getKey());
 		}
 
+	}
+
+	@Test
+	public void testClientWithAbstractScyllaDAO(){
+		List<Client> clients = clientDAO.findAll();
+		for (Client client: clients){
+			logger.info("client: {}", client);
+		}
+		logger.info("client count: {}", clients.size());
 	}
 }

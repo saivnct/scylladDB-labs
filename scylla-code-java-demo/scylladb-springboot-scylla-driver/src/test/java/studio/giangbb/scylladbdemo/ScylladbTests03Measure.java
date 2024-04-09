@@ -17,15 +17,12 @@ import studio.giangbb.scylladbdemo.dao.DaoMapper;
 import studio.giangbb.scylladbdemo.models.Client;
 import studio.giangbb.scylladbdemo.models.ClientInfo;
 import studio.giangbb.scylladbdemo.models.ClientName;
+import studio.giangbb.scylladbdemo.models.FavoritePlace;
 
 
-
-
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -39,14 +36,15 @@ class ScylladbTests03Measure {
 	private final DaoMapper daoMapper;
 	private final ClientDao clientDAO;
 
-	public static List<Client> getDummyClientList(int n, int m){
+	public static List<Client> getDummyClientList(int n, int m) throws UnknownHostException {
 		List<Client> clientList= new ArrayList<>();
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < m; j++) {
 				Client client = new Client(
 						new ClientName(
 								String.format("first_%d", j),
-								String.format("last_%d", i)
+								String.format("last_%d", i),
+								j % 2 == 0 ? ClientName.NameStyle.ASIA : ClientName.NameStyle.EURO
 						),
 						new ClientInfo(
 								i+j,
@@ -57,9 +55,18 @@ class ScylladbTests03Measure {
 												String.format("+%d222222%d", i,j),
 												String.format("+%d333333%d", i,j)
 										)
+								),
+								new HashMap<String, InetAddress>(Map.of(
+										"1", InetAddress.getByName(String.format("192.168.1.%d", i)),
+										"2", InetAddress.getByName("127.0.0.1")
+								)),
+								List.of(
+										new FavoritePlace("Singapore", "Singapore", 5),
+										new FavoritePlace("Moscow", "Russia", 3),
+										new FavoritePlace("Buhtan", "Buhtan", 2)
 								)
 						),
-						i == 0 ? Client.Role.ADMIN.ordinal() : Client.Role.USER.ordinal(),
+						i == 0 ? Client.Role.ADMIN : Client.Role.USER,
 						List.of(String.format("lzone-%d-%d", i,i), String.format("szone-%d-%d", i,j))
 				);
 				clientList.add(client);
@@ -111,7 +118,7 @@ class ScylladbTests03Measure {
 	}
 
 	@Test
-	public void testInsert() {
+	public void testInsert() throws UnknownHostException{
 		long startCount = clientDAO.countAll();
 
 		List<Client> clientList = getDummyClientList(100, 1000);
@@ -195,7 +202,7 @@ class ScylladbTests03Measure {
 	@Test
 	public void testFindByIndex_High_Selectivity(){
 		long startTime = System.nanoTime();
-		ClientName clientName = new ClientName("first_120", "last_33");
+		ClientName clientName = new ClientName("first_120", "last_33", ClientName.NameStyle.ASIA);
 		PagingIterable<Client> fetchClients = clientDAO.getByName(clientName);
 		List<Client> clients = new ArrayList<>();
 		for (Client client : fetchClients) {
@@ -216,10 +223,10 @@ class ScylladbTests03Measure {
 
 
 	@Test
-	public void testFindByIndex_Low_Selectivity(){
+	public void testFindByNoIndex_Low_Selectivity(){
 		long startTime = System.nanoTime();
 		Client.Role role = Client.Role.USER;
-		PagingIterable<Client> fetchClients = clientDAO.getByRole(role.ordinal());
+		PagingIterable<Client> fetchClients = clientDAO.getByRole(role);
 		List<Client> clients = new ArrayList<>();
 		for (Client client : fetchClients) {
 			clients.add(client);
@@ -232,7 +239,7 @@ class ScylladbTests03Measure {
 		Assertions.assertThat(clients.size()).isGreaterThan(0);
 		logger.info("client {}", clients.size());
 		for (Client client: clients){
-			Assertions.assertThat(client.getRole()).isEqualTo(role.ordinal());
+			Assertions.assertThat(client.getRole()).isEqualTo(role);
 		}
 	}
 

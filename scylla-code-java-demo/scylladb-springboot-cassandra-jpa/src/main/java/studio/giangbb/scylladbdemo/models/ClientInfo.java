@@ -3,6 +3,9 @@ package studio.giangbb.scylladbdemo.models;
 import org.springframework.data.cassandra.core.mapping.Column;
 import org.springframework.data.cassandra.core.mapping.UserDefinedType;
 
+import java.net.InetAddress;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -19,14 +22,21 @@ public class ClientInfo {
     @Column("phones")
     private Set<String> phones;
 
+    private Map<String, InetAddress> sessions;
+
+    @Column("favorite_places")
+    private List<FavoritePlace> favoritePlaces;
+
 
     public ClientInfo() {
     }
 
-    public ClientInfo(int zipCode, int age, Set<String> phones) {
+    public ClientInfo(int zipCode, int age, Set<String> phones, Map<String, InetAddress> sessions, List<FavoritePlace> favoritePlaces) {
         this.zipCode = zipCode;
         this.age = age;
         this.phones = phones;
+        this.sessions = sessions;
+        this.favoritePlaces = favoritePlaces;
     }
 
     public int getZipCode() {
@@ -53,6 +63,22 @@ public class ClientInfo {
         this.phones = phones;
     }
 
+
+    public Map<String, InetAddress> getSessions() {
+        return sessions;
+    }
+
+    public void setSessions(Map<String, InetAddress> sessions) {
+        this.sessions = sessions;
+    }
+
+    public List<FavoritePlace> getFavoritePlaces() {
+        return favoritePlaces;
+    }
+
+    public void setFavoritePlaces(List<FavoritePlace> favoritePlaces) {
+        this.favoritePlaces = favoritePlaces;
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -67,6 +93,8 @@ public class ClientInfo {
                 "zipCode=" + zipCode +
                 ", age=" + age +
                 ", phones=" + phones +
+                ", sessions=" + sessions +
+                ", favoritePlaces=" + favoritePlaces +
                 '}';
     }
 }

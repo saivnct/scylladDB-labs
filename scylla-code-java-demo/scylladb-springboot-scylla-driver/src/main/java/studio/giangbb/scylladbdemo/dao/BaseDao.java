@@ -3,10 +3,8 @@ package studio.giangbb.scylladbdemo.dao;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
-import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.mapper.annotations.*;
-import com.datastax.oss.driver.shaded.guava.common.base.Function;
 
 import java.util.concurrent.CompletionStage;
 
@@ -24,26 +22,30 @@ public interface BaseDao<T> {
     @Insert
     CompletionStage<Void> saveAsync(T t);
 
+    /**
+     * @param t - entity.
+     * @param ttl - time to live in second.
+     */
     @Insert(ttl = ":ttl")
     void saveWithTtl(T t, int ttl);
 
+
+    /**
+     * @param t - entity.
+     * @param ttl - time to live in second.
+     * @return a {@link CompletionStage} providing a handle to the entity insertion completion.
+     */
     @Insert(ttl = ":ttl")
-    CompletionStage<Void> saveWithTtlAsync(T t);
+    CompletionStage<Void> saveWithTtlAsync(T t, int ttl);
 
-//    @Update
-//    void update(T t);
-//
-//    @Update
-//    CompletionStage<Void> updateAsync(T t);
-//
-//    @Update(ttl = ":ttl")
-//    CompletionStage<Void> updateWithTtlAsync(T t, int ttl);
 
-//    @Select
-//    T findById(KeyType id);
-//
-//    @Select
-//    CompletionStage<T> findByIdAsync(KeyType id);
+    @Update(ifExists = true)
+    boolean saveIfExists(T t);
+
+    @Update(ifExists = true)
+    CompletionStage<Boolean> saveIfExistsAsync(T t);
+
+
 
 
     @Select
@@ -61,7 +63,6 @@ public interface BaseDao<T> {
 
 
     //region Mapper converter
-
     //"lenient" mode:
     // - all entity's properties that have a matching column in the source row will be set.
     // - unmatched properties will be left untouched.

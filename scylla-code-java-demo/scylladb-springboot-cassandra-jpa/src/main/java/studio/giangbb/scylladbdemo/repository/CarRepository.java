@@ -16,10 +16,10 @@ import java.util.List;
  */
 @Repository
 public interface CarRepository extends CassandraRepository<Car, Car.Key>, CarRepositoryCustom{
-    Slice<Car> findAllByYear(int year, Pageable pageable);
+    Slice<Car> findAllByKeyYear(int year, Pageable pageable);
 
 
-    //find by PK - x.key.brand.
+    //find by PK - x.key.brand
     List<Car> findAllByKeyBrand(String brand);
     List<Car> findAllByKey_Brand(String brand);
 

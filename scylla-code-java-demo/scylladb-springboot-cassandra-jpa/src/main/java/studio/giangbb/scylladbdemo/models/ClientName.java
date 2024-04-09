@@ -10,18 +10,26 @@ import java.util.Objects;
  */
 @UserDefinedType("client_name")
 public class ClientName {
+    public enum NameStyle {
+        ASIA, EURO
+    }
+
     @Column("first_name")
     private String firstName;
 
     @Column("last_name")
     private String lastName;
 
+    @Column("name_style")
+    private NameStyle nameStyle;
+
     public ClientName() {
     }
 
-    public ClientName(String firstName, String lastName) {
+    public ClientName(String firstName, String lastName, NameStyle nameStyle) {
         this.firstName = firstName;
         this.lastName = lastName;
+        this.nameStyle = nameStyle;
     }
 
     public String getFirstName() {
@@ -40,12 +48,21 @@ public class ClientName {
         this.lastName = lastName;
     }
 
+
+    public NameStyle getNameStyle() {
+        return nameStyle;
+    }
+
+    public void setNameStyle(NameStyle nameStyle) {
+        this.nameStyle = nameStyle;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ClientName clientName = (ClientName) o;
-        return Objects.equals(firstName, clientName.firstName) && Objects.equals(lastName, clientName.lastName);
+        return Objects.equals(firstName, clientName.firstName) && Objects.equals(lastName, clientName.lastName) && Objects.equals(nameStyle, clientName.nameStyle);
     }
 
     @Override
@@ -53,6 +70,7 @@ public class ClientName {
         return "ClientName{" +
                 "firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
+                ", nameStyle=" + nameStyle +
                 '}';
     }
 }

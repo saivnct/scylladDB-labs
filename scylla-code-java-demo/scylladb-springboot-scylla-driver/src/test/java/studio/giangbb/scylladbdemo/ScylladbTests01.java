@@ -62,7 +62,6 @@ class ScylladbTests01 {
 				.withPartitionKey("id", DataTypes.TIMEUUID)
 				.withClusteringColumn("user_age", DataTypes.INT)
 				.withColumn("user_name", DataTypes.TEXT)
-				.withColumn("write_time", DataTypes.BIGINT)
 				.withClusteringOrder("user_age", ClusteringOrder.DESC)
 				.withCompaction(sizeTieredCompactionStrategy());
 

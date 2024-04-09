@@ -10,7 +10,7 @@ import java.util.Objects;
  * Created by Giangbb on 01/03/2024
  */
 @Table("car")
-public class Car{
+public class Car extends Transportation{
     @PrimaryKeyClass
     public static class Key{
         @PrimaryKeyColumn(name = "brand", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
@@ -19,12 +19,17 @@ public class Car{
         @PrimaryKeyColumn(name = "sub_brand", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
         private String subBrand;
 
-        @PrimaryKeyColumn(name = "model", ordinal = 2, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+        @Indexed
+        @PrimaryKeyColumn(name = "year", ordinal = 2, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+        private int year;
+
+        @PrimaryKeyColumn(name = "model", ordinal = 3, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.ASCENDING)
         private String model;
 
-        public Key(String brand, String subBrand, String model) {
+        public Key(String brand, String subBrand, int year, String model) {
             this.brand = brand;
             this.subBrand = subBrand;
+            this.year = year;
             this.model = model;
         }
 
@@ -44,6 +49,14 @@ public class Car{
             this.subBrand = subBrand;
         }
 
+        public int getYear() {
+            return year;
+        }
+
+        public void setYear(int year) {
+            this.year = year;
+        }
+
         public String getModel() {
             return model;
         }
@@ -57,13 +70,15 @@ public class Car{
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Key key = (Key) o;
-            return Objects.equals(brand, key.brand) && Objects.equals(subBrand, key.subBrand) && Objects.equals(model, key.model);
+            return Objects.equals(brand, key.brand) && Objects.equals(subBrand, key.subBrand) && year == key.year && Objects.equals(model, key.model);
         }
 
         @Override
         public String toString() {
             return "Key{" +
                     "brand='" + brand + '\'' +
+                    ", subBrand='" + subBrand + '\'' +
+                    ", year=" + year +
                     ", model='" + model + '\'' +
                     '}';
         }
@@ -72,18 +87,14 @@ public class Car{
     @PrimaryKey
     private Key key;
 
-    @Column("make")
     private String make;
 
-    @Indexed
-    @Column("year")
-    private int year;
-
-    public Car(Key key, String make, int year) {
+    public Car(Key key, String make) {
+        super(4, true);
         this.key = key;
         this.make = make;
-        this.year = year;
     }
+
 
     //GETTER AND SETTER
 
@@ -104,21 +115,13 @@ public class Car{
         this.make = make;
     }
 
-    public int getYear() {
-        return year;
-    }
-
-    public void setYear(int year) {
-        this.year = year;
-    }
-
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Car car = (Car) o;
-        return Objects.equals(key, car.key) && Objects.equals(make, car.make) && year == car.year;
+        return Objects.equals(key, car.key) && Objects.equals(make, car.make) && getWheels() == car.getWheels()&& isHasEngine() == car.isHasEngine();
     }
 
     @Override
@@ -126,7 +129,6 @@ public class Car{
         return "Car{" +
                 "key=" + key +
                 ", make='" + make + '\'' +
-                ", year=" + year +
-                '}';
+                "} " + super.toString();
     }
 }

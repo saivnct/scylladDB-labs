@@ -70,8 +70,8 @@ class ScylladbTests01UsingCassandraTemplate {
 				String subBrand = String.format("subBrand_%d", j);
 				List<Car> carList= new ArrayList<>();
 				for (int k = 0; k < m; k++){
-					Car.Key key = new Car.Key(brand, subBrand, String.format("model_%d", k));
-					Car car = new Car(key, make, 2000+i);
+					Car.Key key = new Car.Key(brand, subBrand, 2000+i, String.format("model_%d", k));
+					Car car = new Car(key, make);
 					carList.add(car);
 				}
 

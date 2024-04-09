@@ -47,13 +47,11 @@ class ScylladbTests03 {
 		for (int i = 0; i < n; i++) {
 			String make = i % 2 == 0 ? "Japan" : "USA";
 			String brand = String.format("brand_%d", i);
-
-
 			for (int j = 0; j < n/2; j++) {
 				String subBrand = String.format("subBrand_%d", j);
 				List<Car> carList= new ArrayList<>();
 				for (int k = 0; k < m; k++){
-					Car car = new Car(brand, subBrand, String.format("model_%d", k), make, 2000+i);
+					Car car = new Car(brand, subBrand,  2000+i, String.format("model_%d", k), make);
 					carList.add(car);
 				}
 
@@ -78,16 +76,19 @@ class ScylladbTests03 {
 		CreateTableWithOptions createTable = createTable("car")
 				.ifNotExists()
 				.withPartitionKey("brand", DataTypes.TEXT)
-				.withPartitionKey("subBrand", DataTypes.TEXT)
+				.withPartitionKey("sub_brand", DataTypes.TEXT)
+				.withClusteringColumn("year", DataTypes.INT)
 				.withClusteringColumn("model", DataTypes.TEXT)
 				.withColumn("make", DataTypes.TEXT)
-				.withColumn("year", DataTypes.INT)
+				.withColumn("wheels", DataTypes.INT)
+				.withColumn("has_engine", DataTypes.BOOLEAN)
 				.withCompaction(sizeTieredCompactionStrategy());
 
 		CreateIndex createIndex = createIndex()
 				.ifNotExists()
 				.onTable("car")
 				.andColumn("year");
+
 
 		PreparedStatement preparedCreateTable = session.prepare(createTable.build());
 		PreparedStatement preparedCreateIndex = session.prepare(createIndex.build());
@@ -135,7 +136,7 @@ class ScylladbTests03 {
 
 		//find with id(primkey)
 		for (Car car: carList){
-			Car fetchCar = carDao.findByPrimKey(car.getBrand(), car.getSubBrand(), car.getModel());
+			Car fetchCar = carDao.findByPrimKey(car.getBrand(), car.getSubBrand(), car.getYear(), car.getModel());
 			assertThat(fetchCar).isNotNull();
 			assertThat(fetchCar).isEqualTo(car);
 		}

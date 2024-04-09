@@ -1,17 +1,22 @@
 package studio.giangbb.scylladbdemo.models;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
+import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import static com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention.SNAKE_CASE_INSENSITIVE;
+
 /**
  * Created by Giangbb on 06/03/2024
  */
 @Entity
+@NamingStrategy(convention = SNAKE_CASE_INSENSITIVE)
 public class Client {
 
     public enum Role {
@@ -22,15 +27,21 @@ public class Client {
     private UUID id;
 
     private ClientName clientName;
+
+    @CqlName("client_info")
     private ClientInfo clientInfo;
 
-    private int role;
+
+    //Must register with CodecRegistry
+    //https://java-driver.docs.scylladb.com/stable/manual/core/custom_codecs/
+    private Role role;
+
     private List<String> zones;
 
     public Client() {
     }
 
-    public Client(ClientName clientName, ClientInfo clientInfo, int role, List<String> zones) {
+    public Client(ClientName clientName, ClientInfo clientInfo, Role role, List<String> zones) {
         this.id = Uuids.timeBased();
         this.clientName = clientName;
         this.clientInfo = clientInfo;
@@ -62,11 +73,11 @@ public class Client {
         this.clientInfo = clientInfo;
     }
 
-    public int getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(int role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 

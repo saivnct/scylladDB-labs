@@ -7,15 +7,15 @@ import com.datastax.oss.driver.api.mapper.annotations.Entity;
  */
 
 @Entity
-public class Trasportation {
+public class Transportation {
     private int wheels;
     private boolean hasEngine;
 
 
-    public Trasportation() {
+    public Transportation() {
     }
 
-    public Trasportation(int wheels, boolean hasEngine) {
+    public Transportation(int wheels, boolean hasEngine) {
         this.wheels = wheels;
         this.hasEngine = hasEngine;
     }
@@ -34,5 +34,14 @@ public class Trasportation {
 
     public void setHasEngine(boolean hasEngine) {
         this.hasEngine = hasEngine;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Transportation{" +
+                "wheels=" + wheels +
+                ", hasEngine=" + hasEngine +
+                '}';
     }
 }

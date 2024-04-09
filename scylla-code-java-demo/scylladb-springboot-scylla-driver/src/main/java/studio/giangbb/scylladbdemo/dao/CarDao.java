@@ -12,7 +12,7 @@ import studio.giangbb.scylladbdemo.models.Car;
 @Dao
 public interface CarDao extends BaseDao<Car>{
     @Select
-    Car findByPrimKey(String brand, String subBrand, String model);
+    Car findByPrimKey(String brand, String subBrand, int year, String model);
 
     @Select
     PagingIterable<Car> findByPartKey(String brand, String subBrand);

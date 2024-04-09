@@ -6,6 +6,9 @@ import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
+import com.datastax.oss.driver.api.core.type.codec.ExtraTypeCodecs;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +20,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.util.StringUtils;
 import studio.giangbb.scylladbdemo.dao.DaoMapper;
 import studio.giangbb.scylladbdemo.dao.DaoMapperBuilder;
+import studio.giangbb.scylladbdemo.models.Client;
+import studio.giangbb.scylladbdemo.models.ClientName;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -145,5 +150,18 @@ public class ScyllaDriverConfiguration {
     @Bean
     public DaoMapper daoMapper(CqlSession session)  {
         return new DaoMapperBuilder(session).build();
+    }
+
+    @Bean
+    public MutableCodecRegistry mutableCodecRegistry(CqlSession session){
+        MutableCodecRegistry registry = (MutableCodecRegistry) session.getContext().getCodecRegistry();
+
+        //register Custom codecs
+        TypeCodec<Client.Role> clientRoleByNameCodec = ExtraTypeCodecs.enumNamesOf(Client.Role.class);
+        registry.register(clientRoleByNameCodec);
+
+        TypeCodec<ClientName.NameStyle> clientNameStyleByNameCodec = ExtraTypeCodecs.enumNamesOf(ClientName.NameStyle.class);
+        registry.register(clientNameStyleByNameCodec);
+        return registry;
     }
 }

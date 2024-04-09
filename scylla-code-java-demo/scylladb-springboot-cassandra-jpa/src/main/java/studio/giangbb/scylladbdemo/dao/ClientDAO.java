@@ -39,8 +39,8 @@ public class ClientDAO extends AbstractScyllaDAO<UUID, Client> {
     public List<Client> findAllByRole(Client.Role role){
         return this.find(
                 Query.query(
-                        where("role").is(role.ordinal())
-                )
+                        where("role").is(role)
+                ).withAllowFiltering()
         );
     }
 }

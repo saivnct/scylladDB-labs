@@ -16,11 +16,11 @@ import studio.giangbb.scylladbdemo.dao.ClientDAO;
 import studio.giangbb.scylladbdemo.models.Client;
 import studio.giangbb.scylladbdemo.models.ClientInfo;
 import studio.giangbb.scylladbdemo.models.ClientName;
+import studio.giangbb.scylladbdemo.models.FavoritePlace;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,14 +38,15 @@ class ScylladbTestsMeasure {
 
 	private final Logger logger = LoggerFactory.getLogger(ScylladbTestsMeasure.class);
 
-	public static List<Client> getDummyClientList(int n, int m){
+	public static List<Client> getDummyClientList(int n, int m) throws UnknownHostException {
 		List<Client> clientList= new ArrayList<>();
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < m; j++) {
 				Client client = new Client(
 						new ClientName(
 								String.format("first_%d", j),
-								String.format("last_%d", i)
+								String.format("last_%d", i),
+								j % 2 == 0 ? ClientName.NameStyle.ASIA : ClientName.NameStyle.EURO
 						),
 						new ClientInfo(
 								i+j,
@@ -56,9 +57,18 @@ class ScylladbTestsMeasure {
 												String.format("+%d222222%d", i,j),
 												String.format("+%d333333%d", i,j)
 										)
+								),
+								new HashMap<String, InetAddress>(Map.of(
+										"1", InetAddress.getByName(String.format("192.168.1.%d", i)),
+										"2", InetAddress.getByName("127.0.0.1")
+								)),
+								List.of(
+										new FavoritePlace("Singapore", "Singapore", 5),
+										new FavoritePlace("Moscow", "Russia", 3),
+										new FavoritePlace("Buhtan", "Buhtan", 2)
 								)
 						),
-						i == 0 ? Client.Role.ADMIN.ordinal() : Client.Role.USER.ordinal(),
+						i == 0 ? Client.Role.ADMIN : Client.Role.USER,
 						List.of(String.format("lzone-%d-%d", i,i), String.format("szone-%d-%d", i,j))
 				);
 				clientList.add(client);
@@ -70,7 +80,7 @@ class ScylladbTestsMeasure {
 
 
 	@Test
-	public void testCount(){
+	public void testCount()  {
 		Metadata metadata =  cqlSession.getMetadata();
 		logger.info("Connected session {}", cqlSession.getName());
 
@@ -102,7 +112,7 @@ class ScylladbTestsMeasure {
 	}
 
 	@Test
-	public void testInsert() {
+	public void testInsert() throws UnknownHostException{
 		long startCount = clientDAO.countAll();
 
 		List<Client> clientList = getDummyClientList(100, 1000);
@@ -184,7 +194,7 @@ class ScylladbTestsMeasure {
 	@Test
 	public void testFindByIndex_High_Selectivity(){
 		long startTime = System.nanoTime();
-		ClientName clientName = new ClientName("first_120", "last_33");
+		ClientName clientName = new ClientName("first_120", "last_33", ClientName.NameStyle.ASIA); //120%2
 		List<Client> fetchClients  = clientDAO.findAllByName(clientName);
 		long endTime = System.nanoTime();
 

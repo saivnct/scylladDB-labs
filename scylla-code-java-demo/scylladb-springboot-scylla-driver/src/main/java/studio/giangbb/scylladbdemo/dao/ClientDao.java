@@ -23,8 +23,8 @@ public interface ClientDao extends BaseDao<Client>{
     @Query(value = "TRUNCATE client")
     void deleteAll();
 
-    @Select(customWhereClause = "role = :role")
-    PagingIterable<Client> getByRole(int role);
+    @Select(customWhereClause = "role = :role ALLOW FILTERING")
+    PagingIterable<Client> getByRole(Client.Role role);
 
     @Select(customWhereClause = "client_name = :clientName")
     PagingIterable<Client> getByName(ClientName clientName);

@@ -30,16 +30,15 @@ public class Client {
     @Column("client_info")
     private ClientInfo clientInfo;
 
-    @Indexed
     @Column("role")
-    private int role;
+    private Role role;
     @Column("zones")
     private List<String> zones;
 
     public Client() {
     }
 
-    public Client(ClientName clientName, ClientInfo clientInfo, int role, List<String> zones) {
+    public Client(ClientName clientName, ClientInfo clientInfo, Role role, List<String> zones) {
         this.id = Uuids.timeBased();
         this.clientName = clientName;
         this.clientInfo = clientInfo;
@@ -71,11 +70,11 @@ public class Client {
         this.clientInfo = clientInfo;
     }
 
-    public int getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(int role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 

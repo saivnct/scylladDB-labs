@@ -165,13 +165,12 @@ class ScylladbTests02UsingCassandraRepository {
 		String brand = carList.get(0).getKey().getBrand();
 		String subBrand = carList.get(0).getKey().getSubBrand();
 		String pk = String.format("%s_%s", brand, subBrand);
-
 		fetchCars = carRepository.findAllByPK(brand,subBrand);
 		assertThat(fetchCars.size()).isEqualTo(carMap.get(pk).size());
 
 		//find with partition key - V2
 //		String brand = carList.get(0).getKey().getBrand();
-////		fetchCars = carRepository.findAllByKeyBrand(brand);
+////		fetchCars = carRepository.findAllByKeyBrand(brand,subBrand);
 //		fetchCars = carRepository.findAllByKey_Brand(brand);
 //		assertThat(fetchCars.size()).isEqualTo(carMap.get(brand).size());
 
@@ -198,7 +197,7 @@ class ScylladbTests02UsingCassandraRepository {
 		//find by index with pagination
 		final int year = 2000;
 		fetchCars = new ArrayList<>();
-		carsSlice = carRepository.findAllByYear(year, PageRequest.of(0, 3));
+		carsSlice = carRepository.findAllByKeyYear(year, PageRequest.of(0, 3));
 		while (carsSlice.hasContent()) {
 			fetchCars.addAll(carsSlice.getContent());
 			// process the cars
@@ -207,11 +206,11 @@ class ScylladbTests02UsingCassandraRepository {
 			}
 			Pageable nextPageable = carsSlice.nextPageable();
 //			logger.info("nextPageable: {} - {}", nextPageable.getPageNumber(), nextPageable.getPageSize());
-			carsSlice = carRepository.findAllByYear(year, nextPageable);
+			carsSlice = carRepository.findAllByKeyYear(year, nextPageable);
 		}
 		assertThat(fetchCars.size()).isEqualTo(
 				carList.stream()
-				.filter(car -> car.getYear() == year)
+				.filter(car -> car.getKey().getYear() == year)
 				.count()
 		);
 //		for (Car car: fetchCars){
@@ -226,7 +225,7 @@ class ScylladbTests02UsingCassandraRepository {
 		fetchCars = carRepository.FindByYearAndMake(year2, make);
 		assertThat(fetchCars.size()).isEqualTo(
 				carList.stream()
-				.filter(car -> car.getYear() == year2 && car.getMake().equals(make))
+				.filter(car -> car.getKey().getYear() == year2 && car.getMake().equals(make))
 				.count()
 		);
 //		for (Car car: fetchCars){

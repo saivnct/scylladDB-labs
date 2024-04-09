@@ -1,40 +1,45 @@
 package studio.giangbb.scylladbdemo.models;
 
-import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
-import com.datastax.oss.driver.api.mapper.annotations.Entity;
-import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.mapper.annotations.*;
 
 import java.util.Objects;
+
+import static com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention.SNAKE_CASE_INSENSITIVE;
 
 /**
  * Created by Giangbb on 04/04/2024
  */
+@CqlName("car")
 @Entity
-public class Car extends Trasportation{
-    @PartitionKey(0)
-    private String brand;
-
+@NamingStrategy(convention = SNAKE_CASE_INSENSITIVE)
+public class Car extends Transportation {
     @PartitionKey(1)
     private String subBrand;
 
-    @ClusteringColumn
+    @PartitionKey(0)
+    private String brand;
+
+
+    @ClusteringColumn(1)
     private String model;
 
-    private String make;
-
+    @ClusteringColumn(0)
     private int year;
+
+
+    private String make;
 
     public Car() {
     }
 
-    public Car(String brand, String subBrand, String model, String make, int year) {
+    public Car(String brand, String subBrand, int year, String model, String make) {
+        super(4, true);
         this.brand = brand;
         this.subBrand = subBrand;
+        this.year = year;
         this.model = model;
         this.make = make;
-        this.year = year;
     }
-
 
     public String getBrand() {
         return brand;
@@ -81,18 +86,18 @@ public class Car extends Trasportation{
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Car car = (Car) o;
-        return Objects.equals(brand, car.brand) && Objects.equals(subBrand, car.subBrand) && Objects.equals(model, car.model) && Objects.equals(make, car.make) && year == car.year;
+        return Objects.equals(brand, car.brand) && Objects.equals(subBrand, car.subBrand) && Objects.equals(model, car.model) && Objects.equals(make, car.make) && year == car.year  && getWheels() == car.getWheels()&& isHasEngine() == car.isHasEngine();
     }
 
 
     @Override
     public String toString() {
         return "Car{" +
-                "brand='" + brand + '\'' +
-                ", subBrand='" + subBrand + '\'' +
+                "subBrand='" + subBrand + '\'' +
+                ", brand='" + brand + '\'' +
                 ", model='" + model + '\'' +
+                ", year=" + year +
                 ", make='" + make + '\'' +
-                ", year='" + year + '\'' +
-                '}';
+                "} " + super.toString();
     }
 }

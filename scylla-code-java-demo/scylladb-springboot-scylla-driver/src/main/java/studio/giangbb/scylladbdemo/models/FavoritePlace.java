@@ -1,13 +1,13 @@
 package studio.giangbb.scylladbdemo.models;
 
-import org.springframework.data.cassandra.core.mapping.UserDefinedType;
+import com.datastax.oss.driver.api.mapper.annotations.Entity;
 
 import java.util.Objects;
 
 /**
  * Created by Giangbb on 01/03/2024
  */
-@UserDefinedType()
+@Entity
 public class FavoritePlace {
 
     private String city;

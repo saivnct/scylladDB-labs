@@ -32,9 +32,6 @@ public interface UserDao extends BaseDao<User>{
     PagingIterable<User> getByUserName(String username);
 
 
-
-    //@Computed fields are only used for select-based queries
-//    @Query(value = "select id, user_age, user_name, writetime(user_name) as write_time from user where user_age > :userAge ALLOW FILTERING")
     @Select(customWhereClause = "user_age > :userAge ALLOW FILTERING")
     PagingIterable<User> getUsersOlderThanAge(int userAge);
 }

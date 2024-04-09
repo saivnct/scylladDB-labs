@@ -8,8 +8,8 @@ import java.util.UUID;
 
 import static com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention.SNAKE_CASE_INSENSITIVE;
 
+@CqlName("user")
 @Entity
-//@CqlName("user")
 @NamingStrategy(convention = SNAKE_CASE_INSENSITIVE)
 public class User {
     @PartitionKey
@@ -78,8 +78,8 @@ public class User {
     public String toString() {
         return "User{" +
                 "id=" + id +
-                ", userName='" + userName + '\'' +
                 ", userAge=" + userAge +
+                ", userName='" + userName + '\'' +
                 ", writetime=" + writetime +
                 '}';
     }
