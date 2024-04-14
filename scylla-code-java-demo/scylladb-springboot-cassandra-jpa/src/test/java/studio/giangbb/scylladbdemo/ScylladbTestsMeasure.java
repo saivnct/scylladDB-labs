@@ -180,7 +180,7 @@ class ScylladbTestsMeasure {
 	@Test
 	public void testFindByPrimKey(){
 		long startTime = System.nanoTime();
-		UUID uuid = UUID.fromString("957ab028-ecad-11ee-afd9-02b8e97fa0d5");
+		UUID uuid = UUID.fromString("42cad5e1-f9ff-11ee-bd96-c93e812aefd2");
 		Client client = clientDAO.getByKey(uuid);
 		long endTime = System.nanoTime();
 
@@ -224,7 +224,7 @@ class ScylladbTestsMeasure {
 		Assertions.assertThat(fetchClients.size()).isGreaterThan(0);
 		logger.info("client {}", fetchClients.size());
 		for (Client client: fetchClients){
-			Assertions.assertThat(client.getRole()).isEqualTo(role.ordinal());
+			Assertions.assertThat(client.getRole()).isEqualTo(role);
 		}
 	}
 }
