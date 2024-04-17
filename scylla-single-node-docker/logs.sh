@@ -1,1 +1,1 @@
-docker-compose logs -f scylla-node1
+docker compose logs -f scylla-node1

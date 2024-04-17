@@ -2,11 +2,8 @@ package studio.giangbb.scylladbdemo;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.PagingIterable;
-import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
-import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -15,21 +12,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import studio.giangbb.scylladbdemo.dao.ClientDao;
 import studio.giangbb.scylladbdemo.dao.DaoMapper;
-import studio.giangbb.scylladbdemo.models.Client;
-import studio.giangbb.scylladbdemo.models.ClientInfo;
-import studio.giangbb.scylladbdemo.models.ClientName;
-import studio.giangbb.scylladbdemo.models.FavoritePlace;
+import studio.giangbb.scylladbdemo.entity.Client;
+import studio.giangbb.scylladbdemo.entity.udt.ClientInfo;
+import studio.giangbb.scylladbdemo.entity.udt.ClientName;
 
-
-import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static studio.giangbb.scylladbdemo.ScylladbTests02.getDummyClientList;
 
 @SpringBootTest
-class ScylladbTests03Measure {
-	private final Logger logger = LoggerFactory.getLogger(ScylladbTests03Measure.class);
+class ScylladbTestsMeasure {
+	private final Logger logger = LoggerFactory.getLogger(ScylladbTestsMeasure.class);
 
 
 	private final CqlSession session;
@@ -37,49 +34,8 @@ class ScylladbTests03Measure {
 	private final DaoMapper daoMapper;
 	private final ClientDao clientDAO;
 
-	public static List<Client> getDummyClientList(int n, int m) throws UnknownHostException {
-		List<Client> clientList= new ArrayList<>();
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < m; j++) {
-				Client client = new Client(
-						new ClientName(
-								String.format("first_%d", j),
-								String.format("last_%d", i),
-								j % 2 == 0 ? ClientName.NameStyle.ASIA : ClientName.NameStyle.EURO
-						),
-						new ClientInfo(
-								i+j,
-								20+j,
-								new HashSet<>(
-										List.of(
-												String.format("+%d111111%d", i,j),
-												String.format("+%d222222%d", i,j),
-												String.format("+%d333333%d", i,j)
-										)
-								),
-								new HashMap<String, InetAddress>(Map.of(
-										"1", InetAddress.getByName(String.format("192.168.1.%d", i)),
-										"2", InetAddress.getByName("127.0.0.1")
-								)),
-								List.of(
-										new FavoritePlace("Singapore", "Singapore", 5),
-										new FavoritePlace("Moscow", "Russia", 3),
-										new FavoritePlace("Buhtan", "Buhtan", 2)
-								)
-						),
-						i == 0 ? Client.Role.ADMIN : Client.Role.USER,
-						List.of(String.format("lzone-%d-%d", i,i), String.format("szone-%d-%d", i,j))
-				);
-				clientList.add(client);
-			}
-		}
-
-		return clientList;
-	}
-
-
 	@Autowired
-	public ScylladbTests03Measure(
+	public ScylladbTestsMeasure(
 			CqlSession session,
 			DaoMapper daoMapper
 	) {
@@ -92,9 +48,6 @@ class ScylladbTests03Measure {
 	public void testCount(){
 		long count = clientDAO.countAll();
 		logger.info("count {}", count);
-
-
-		logger.info("consistency {}", session.getContext().getConfig().getDefaultProfile().getString(DefaultDriverOption.REQUEST_CONSISTENCY));
 
 		Metadata metadata = session.getMetadata();
 		logger.info("Connected session {}", session.getName());
@@ -192,8 +145,8 @@ class ScylladbTests03Measure {
 
 	@Test
 	public void testFindByPrimKey(){
-		UUID uuid = UUID.fromString("42cad5e1-f9ff-11ee-bd96-c93e812aefd2");
 		long startTime = System.nanoTime();
+		UUID uuid = UUID.fromString("09a46f49-eb26-11ee-9573-efd20a8cda87");
 		Client client = clientDAO.findByPrimKey(uuid);
 		long endTime = System.nanoTime();
 
@@ -206,7 +159,7 @@ class ScylladbTests03Measure {
 	@Test
 	public void testFindByIndex_High_Selectivity(){
 		long startTime = System.nanoTime();
-		ClientName clientName = new ClientName("first_120", "last_33", ClientName.NameStyle.ASIA);
+		ClientName clientName = new ClientName("first_120", "last_33", ClientName.NameStyle.ASIA); //120%2
 		PagingIterable<Client> fetchClients = clientDAO.getByName(clientName);
 		List<Client> clients = new ArrayList<>();
 		for (Client client : fetchClients) {

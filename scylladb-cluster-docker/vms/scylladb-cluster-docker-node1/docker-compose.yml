@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+
+  scylla-node:
+    container_name: scylla-node
+    image: scylladb/scylla:5.2
+    restart: always
+    command: --smp 2 --memory 2G --api-address 0.0.0.0 --listen-address 192.168.206.128 --broadcast-address 192.168.206.128 --broadcast-rpc-address 192.168.206.128
+    volumes:
+      - "./scylla/scylla.yaml:/etc/scylla/scylla.yaml"
+      - "./scylla/cassandra-rackdc.properties.dc1:/etc/scylla/cassandra-rackdc.properties"
+    network_mode: "host"

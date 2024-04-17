@@ -1,1 +1,1 @@
-docker-compose exec scylla-node1 cqlsh
+docker compose exec scylla-node1 cqlsh

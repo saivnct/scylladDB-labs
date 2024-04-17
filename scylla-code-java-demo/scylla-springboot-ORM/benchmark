@@ -1,0 +1,60 @@
+TEST ENV:
+- 3 Node VM Host Only
+- 2vCPU + 2G
+- RF = 2, LOCAL_QUORUM
+
+
+
+-----------------------INSERT-----------------------
+List<Client> clientList = getDummyClientList(100, 1000);
+Execution time in milliSec: 206823 (200K), 201704 (500k)
+Repo:
+Execution time in milliSec: 119740 (0), 115258 (300k), 137018(600k)
+JPA:
+Execution time in milliSec: 214531 (100K), 215936(400k)
+
+
+-----------------------FIND ALL-----------------------
+700K
+Execution time in milliSec: 27144, 31661, 25946
+Repo:
+Execution time in milliSec: 33180, 31790, 32795
+JPA:
+Execution time in milliSec: 36895, 37756, 36818
+
+
+
+-----------------------FIND BY PRIM KEY-----------------------
+700K
+Execution time in milliSec: 15, 15, 16
+Repo:
+Execution time in milliSec: 34, 29, 33
+JPA:
+Execution time in milliSec: 72, 61, 63
+
+
+
+-----------------------FIND BY INDEX - HIGH SELECTIVITY-----------------------
+7/700K
+Execution time in milliSec: 26, 25, 23
+Repo:
+Execution time in milliSec: 53, 51, 54
+JPA:
+Execution time in milliSec: 126, 159
+
+
+-----------------------FIND BY INDEX - LOW SELECTIVITY-----------------------
+693K/700K
+
+Execution time in milliSec: 27395, 31108, 28400
+Repo:
+Execution time in milliSec: 36777, 35945, 35271
+JPA:
+Execution time in milliSec: 41622, 38494, 44538
+
+
+
+
+
+
+
