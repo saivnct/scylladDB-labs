@@ -1,5 +1,6 @@
 package studio.giangbb.scylladbdemo;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
@@ -43,26 +44,32 @@ public class ScylladbRepoTests01 {
     }
 
     @Test
-    public void test() throws ExecutionException, InterruptedException, UnknownHostException {
+    public void testClean() throws ExecutionException, InterruptedException {
         userDAO.deleteAll();
-
-        int n = 10;
-
-        List<User> userList = getDummyUserList(10);
-
 
         long count = userDAO.countAll();
         long countASync = userDAO.countAllAsync().toCompletableFuture().get();
         assertThat(count).isEqualTo(0);
         assertThat(count).isEqualTo(countASync);
+    }
+
+    @Test
+    public void test() throws ExecutionException, InterruptedException, UnknownHostException {
+        long countStart = userDAO.countAll();
 
 
+        ConsistencyLevel consistencyLevel = null;
+//        ConsistencyLevel consistencyLevel = ConsistencyLevel.LOCAL_ONE;
+//        ConsistencyLevel consistencyLevel = ConsistencyLevel.LOCAL_QUORUM;
+
+        int n = 10;
+        List<User> userList = getDummyUserList(10);
 
         User user0 = userList.get(0);
         User user1 = userList.get(1);
 
 
-        userDAO.save(user0);
+        userDAO.save(user0, consistencyLevel);
         User userFetch0 = userDAO.findByPrimaryKey(user0);
         User userFetch0Async = userDAO.findByPrimaryKeyAsync(user0).toCompletableFuture().get();
         assertThat(userFetch0).isNotNull();
@@ -91,14 +98,14 @@ public class ScylladbRepoTests01 {
         assertThat(userFetch0Async).isEqualTo(user0);
 
 
-        boolean saved = userDAO.saveIfExists(user0);
+        boolean saved = userDAO.saveIfExists(user0, consistencyLevel);
         assertThat(saved).isTrue();
-        saved = userDAO.saveIfExistsAsync(user0).toCompletableFuture().get();
+        saved = userDAO.saveIfExistsAsync(user0, consistencyLevel).toCompletableFuture().get();
         assertThat(saved).isTrue();
 
-        saved = userDAO.saveIfExists(user1);
+        saved = userDAO.saveIfExists(user1, consistencyLevel);
         assertThat(saved).isFalse();
-        saved = userDAO.saveIfExistsAsync(user1).toCompletableFuture().get();
+        saved = userDAO.saveIfExistsAsync(user1, consistencyLevel).toCompletableFuture().get();
         assertThat(saved).isFalse();
 
 
@@ -123,20 +130,20 @@ public class ScylladbRepoTests01 {
 
 
 
-        userDAO.save(user0);
+        userDAO.save(user0, consistencyLevel);
+        long count = userDAO.countAll();
+        assertThat(count).isEqualTo(countStart + 1);
+        userDAO.delete(user0, consistencyLevel);
         count = userDAO.countAll();
-        assertThat(count).isEqualTo(1);
-        userDAO.delete(user0);
-        count = userDAO.countAll();
-        assertThat(count).isEqualTo(0);
+        assertThat(count).isEqualTo(countStart);
 
 
-        userDAO.save(user0);
+        userDAO.save(user0, consistencyLevel);
         count = userDAO.countAll();
-        assertThat(count).isEqualTo(1);
-        userDAO.deleteAsync(user0).toCompletableFuture().get();
+        assertThat(count).isEqualTo(countStart + 1);
+        userDAO.deleteAsync(user0, consistencyLevel).toCompletableFuture().get();
         count = userDAO.countAll();
-        assertThat(count).isEqualTo(0);
+        assertThat(count).isEqualTo(countStart);
 
 
 
@@ -145,7 +152,7 @@ public class ScylladbRepoTests01 {
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (User user : userList) {
-            CompletionStage<Void> saveCar = userDAO.saveAsync(user);
+            CompletionStage<Void> saveCar = userDAO.saveAsync(user, consistencyLevel);
             futures.add(saveCar.toCompletableFuture());
         }
         logger.info("Wait for insertion completed...");
@@ -155,9 +162,9 @@ public class ScylladbRepoTests01 {
         combinedFuture.get();
 
         count = userDAO.countAll();
-        countASync = userDAO.countAllAsync().toCompletableFuture().get();
+        long countASync = userDAO.countAllAsync().toCompletableFuture().get();
         assertThat(count).isEqualTo(countASync);
-        assertThat(count).isEqualTo(userList.size());
+        assertThat(count).isEqualTo(userList.size() + countStart);
         logger.info("count {}", count);
 
 
@@ -174,7 +181,7 @@ public class ScylladbRepoTests01 {
         long countByPKey = userDAO.countByPartitionKey(user0);
         long countByPKeyAsync = userDAO.countByPartitionKeyAsync(user0).toCompletableFuture().get();
         assertThat(countByPKey).isEqualTo(1);
-        assertThat(countByPKeyAsync).isEqualTo(1);
+        assertThat(countByPKeyAsync).isEqualTo( 1);
 
 
 
@@ -222,7 +229,7 @@ public class ScylladbRepoTests01 {
 
 
         users = userDAO.findAll();
-        assertThat(users.size()).isEqualTo(userList.size());
+        assertThat(users.size()).isEqualTo(userList.size() + countStart);
 
 
         userFetchsPagingIterable = userDAO.findAllPagingIterable();
@@ -230,7 +237,7 @@ public class ScylladbRepoTests01 {
         for (User user : userFetchsPagingIterable) {
             users.add(user);
         }
-        assertThat(users.size()).isEqualTo(userList.size());
+        assertThat(users.size()).isEqualTo(userList.size() + countStart);
         assertThat(userFetchsPagingIterable.iterator().hasNext()).isEqualTo(false);
         assertThat(userFetchsPagingIterable.isFullyFetched()).isEqualTo(true);
 
@@ -243,54 +250,39 @@ public class ScylladbRepoTests01 {
                 mappedAsyncPagingIterable.currentPage().forEach(allUsers::add);
                 hasMorePages = mappedAsyncPagingIterable.hasMorePages();
                 if (hasMorePages){
-                    logger.info("fetchNextPage");
                     mappedAsyncPagingIterable.fetchNextPage();
                 }
             }
             return allUsers;
         }).toCompletableFuture().get();
-        assertThat(users.size()).isEqualTo(userList.size());
+        assertThat(users.size()).isEqualTo(userList.size() + countStart);
+        logger.info("users.size: {}", users.size());
 
         //find no index column with AllowFiltering
         int age = 20;
         userFetchsPagingIterable = userDAO.getUsersOlderThanAge(age);
-        users = new ArrayList<>();
         for (User userFetch : userFetchsPagingIterable) {
-            users.add(userFetch);
+            assertThat(userFetch.getUserAge()).isGreaterThanOrEqualTo(age);
+            logger.info("userFetch.getUserAge: {}", userFetch.getUserAge());
         }
-        assertThat(users.size()).isEqualTo(userList.stream().filter(p -> p.getUserAge() > age).count());
-        logger.info("find with AllowFiltering - {} - users {}", users.size(), users);
 
         //find by primitive index column
         for (User user: userList){
             userFetchsPagingIterable = userDAO.getByUserName(user.getUserName());
-            users = new ArrayList<>();
             for (User userFetch : userFetchsPagingIterable) {
-                users.add(userFetch);
-            }
-            assertThat(users.size()).isEqualTo(userList.stream().filter(p -> p.getUserName().equals(user.getUserName())).count());
-            if (!users.isEmpty()){
-                assertThat(users.get(0)).isEqualTo(user);
+                assertThat(userFetch.getUserName()).isEqualTo(user.getUserName());
+                logger.info("userFetch.getUserName: {}", userFetch.getUserName());
             }
         }
 
         //find by Tuple index column
         for (User user: userList){
             userFetchsPagingIterable = userDAO.getByUserTupleIndex(user.getUserTupleIndex());
-            users = new ArrayList<>();
             for (User userFetch : userFetchsPagingIterable) {
-                users.add(userFetch);
-            }
-            logger.info("find by tuple: users {}", users.size());
-            assertThat(users.size()).isEqualTo(userList.stream().filter(p -> p.getUserTupleIndex().equals(user.getUserTupleIndex())).count());
-            if (!users.isEmpty()){
-                assertThat(users.get(0)).isEqualTo(user);
+                assertThat(userFetch.getUserTupleIndex()).isEqualTo(user.getUserTupleIndex());
+                logger.info("userFetch.getUserTupleIndex: {}", userFetch.getUserTupleIndex());
             }
         }
-
-
-
-
     }
 
 }

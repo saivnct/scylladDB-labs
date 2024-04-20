@@ -1,7 +1,11 @@
 package studio.giangbb.scylladbdemo;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.PagingIterable;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -26,6 +30,8 @@ import static studio.giangbb.scylladbdemo.ScylladbTests02.getDummyClientList;
 class ScylladbTestsMeasureRepo {
 	private final Logger logger = LoggerFactory.getLogger(ScylladbTestsMeasureRepo.class);
 
+	@Autowired
+	private CqlSession session;
 
 	@Autowired
 	private ClientDAO clientDAO;
@@ -35,6 +41,17 @@ class ScylladbTestsMeasureRepo {
 	public void testCount(){
 		long count = clientDAO.countAll();
 		logger.info("count {}", count);
+
+		logger.info("consistency {}", session.getContext().getConfig().getDefaultProfile().getString(DefaultDriverOption.REQUEST_CONSISTENCY));
+
+		Metadata metadata = session.getMetadata();
+		logger.info("Connected session {}", session.getName());
+
+
+		for (Node node : metadata.getNodes().values()) {
+			logger.info("Node session {}, Datatacenter: {}; Host: {}; Rack: {}", node.getEndPoint().resolve(),
+					node.getDatacenter(), node.getEndPoint(), node.getRack());
+		}
 	}
 
 
@@ -123,7 +140,7 @@ class ScylladbTestsMeasureRepo {
 
 	@Test
 	public void testFindByPrimKey(){
-		UUID uuid = UUID.fromString("42cad5e1-f9ff-11ee-bd96-c93e812aefd2");
+		UUID uuid = UUID.fromString("ee4c6bd8-feb7-11ee-8b75-174bb6925983");
 		Map<CqlIdentifier, Object> pmkeys = Map.of(
 				CqlIdentifier.fromCql("id"), uuid
 		);
