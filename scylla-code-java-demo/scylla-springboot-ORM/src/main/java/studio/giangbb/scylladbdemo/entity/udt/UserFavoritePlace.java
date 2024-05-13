@@ -6,7 +6,7 @@ import com.giangbb.scylla.core.mapping.UserDefinedType;
 import java.util.Objects;
 
 /**
- * Created by Giangbb on 01/03/2024
+ * Created by giangbb on 12/05/2024
  */
 @UserDefinedType
 @Entity

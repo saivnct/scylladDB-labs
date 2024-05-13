@@ -10,7 +10,7 @@ import studio.giangbb.scylladbdemo.entity.udt.ClientName;
 import java.util.UUID;
 
 /**
- * Created by Giangbb on 06/03/2024
+ * Created by giangbb on 12/05/2024
  */
 @Dao
 public interface ClientDao extends BaseDao<Client>{

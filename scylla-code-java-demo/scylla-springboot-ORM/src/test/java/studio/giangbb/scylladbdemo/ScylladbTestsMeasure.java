@@ -24,6 +24,9 @@ import java.util.UUID;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static studio.giangbb.scylladbdemo.ScylladbTests02.getDummyClientList;
 
+/**
+ * Created by giangbb on 12/05/2024
+ */
 @SpringBootTest
 class ScylladbTestsMeasure {
 	private final Logger logger = LoggerFactory.getLogger(ScylladbTestsMeasure.class);

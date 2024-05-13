@@ -24,7 +24,7 @@ import static studio.giangbb.scylladbdemo.ScylladbRepoTests01.sleepTask;
 import static studio.giangbb.scylladbdemo.ScylladbTests02.getDummyClientList;
 
 /**
- * Created by Giangbb on 12/04/2024
+ * Created by giangbb on 12/05/2024
  */
 @SpringBootTest
 public class ScylladbRepoTests02 {

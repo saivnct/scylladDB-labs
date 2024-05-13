@@ -1,7 +1,7 @@
 package studio.giangbb.scylladbdemo.controller;
 
 /**
- * Created by Giangbb on 01/03/2024
+ * Created by giangbb on 12/05/2024
  */
 
 import com.datastax.oss.driver.api.core.DriverException;

@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Created by Giangbb on 01/03/2024
+ * Created by giangbb on 12/05/2024
  */
 @SpringBootApplication
 public class ScylladbDemoApplication {

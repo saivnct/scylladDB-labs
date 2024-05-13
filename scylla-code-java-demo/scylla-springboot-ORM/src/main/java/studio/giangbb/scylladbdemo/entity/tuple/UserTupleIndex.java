@@ -6,7 +6,7 @@ import com.giangbb.scylla.core.mapping.Tuple;
 import java.util.Objects;
 
 /**
- * Created by UserTuple on 15/04/2024
+ * Created by giangbb on 12/05/2024
  */
 @Tuple
 public class UserTupleIndex {

@@ -24,7 +24,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static studio.giangbb.scylladbdemo.ScylladbTests01.getDummyUserList;
 
 /**
- * Created by Giangbb on 12/04/2024
+ * Created by giangbb on 12/05/2024
  */
 @SpringBootTest
 public class ScylladbRepoTests01 {

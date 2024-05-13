@@ -5,7 +5,7 @@ import com.giangbb.scylla.core.mapping.Element;
 import com.giangbb.scylla.core.mapping.Tuple;
 
 /**
- * Created by Giangbb on 15/04/2024
+ * Created by giangbb on 12/05/2024
  */
 
 @Tuple

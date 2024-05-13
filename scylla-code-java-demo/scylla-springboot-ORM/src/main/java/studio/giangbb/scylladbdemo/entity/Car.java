@@ -11,7 +11,7 @@ import java.util.Objects;
 import static com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention.SNAKE_CASE_INSENSITIVE;
 
 /**
- * Created by Giangbb on 04/04/2024
+ * Created by giangbb on 12/05/2024
  */
 @CqlName("car")
 @Table

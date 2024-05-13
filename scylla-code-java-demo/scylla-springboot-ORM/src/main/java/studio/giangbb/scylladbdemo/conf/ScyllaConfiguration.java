@@ -16,7 +16,7 @@ import com.giangbb.scylla.config.SchemaAction;
 import java.time.Duration;
 
 /**
- * Created by giangbb on 14/06/2023
+ * Created by giangbb on 12/05/2024
  */
 @Configuration
 public class ScyllaConfiguration extends AbstractScyllaConfiguration {

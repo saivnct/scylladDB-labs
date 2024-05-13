@@ -12,6 +12,9 @@ import java.util.UUID;
 
 import static com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention.SNAKE_CASE_INSENSITIVE;
 
+/**
+ * Created by giangbb on 12/05/2024
+ */
 @CqlName("user")
 @Table
 @Entity

@@ -8,7 +8,7 @@ import com.giangbb.scylla.core.ScyllaTemplate;
 import com.giangbb.scylla.repository.SimpleScyllaRepository;
 
 /**
- * Created by Giangbb on 09/04/2024
+ * Created by giangbb on 12/05/2024
  */
 
 @Component
