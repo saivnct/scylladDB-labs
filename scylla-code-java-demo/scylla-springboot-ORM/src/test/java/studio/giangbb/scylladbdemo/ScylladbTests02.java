@@ -23,6 +23,9 @@ import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+/**
+ * Created by giangbb on 12/05/2024
+ */
 @SpringBootTest
 class ScylladbTests02 {
 	private final Logger logger = LoggerFactory.getLogger(ScylladbTests02.class);

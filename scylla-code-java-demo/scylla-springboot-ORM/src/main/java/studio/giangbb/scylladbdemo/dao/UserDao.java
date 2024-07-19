@@ -9,6 +9,9 @@ import studio.giangbb.scylladbdemo.entity.User;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
+/**
+ * Created by giangbb on 12/05/2024
+ */
 @Dao
 public interface UserDao extends BaseDao<User>{
     @Select

@@ -7,7 +7,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Select;
 import studio.giangbb.scylladbdemo.entity.Car;
 
 /**
- * Created by Giangbb on 04/04/2024
+ * Created by giangbb on 12/05/2024
  */
 @Dao
 public interface CarDao extends BaseDao<Car>{

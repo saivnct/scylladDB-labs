@@ -3,7 +3,7 @@ package studio.giangbb.scylladbdemo.entity;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 
 /**
- * Created by Giangbb on 06/04/2024
+ * Created by giangbb on 12/05/2024
  */
 
 @Entity

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by Giangbb on 06/03/2024
+ * Created by giangbb on 12/05/2024
  */
 @UserDefinedType
 @CqlName("client_info")
