@@ -17,10 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static studio.giangbb.scylladbdemo.ScylladbTests01.getDummyUserList;
 
 /**
@@ -54,9 +56,82 @@ public class ScylladbRepoTests01 {
     }
 
     @Test
-    public void test() throws ExecutionException, InterruptedException, UnknownHostException {
+    public void testSaveAll() throws ExecutionException, InterruptedException, UnknownHostException{
         long countStart = userDAO.countAll();
 
+
+        List<ConsistencyLevel> consistencyLevels = new ArrayList<>();
+        consistencyLevels.add(null);
+        consistencyLevels.add(ConsistencyLevel.LOCAL_ONE);
+        consistencyLevels.add(ConsistencyLevel.LOCAL_QUORUM);
+        int n = 10;
+
+        for (ConsistencyLevel consistencyLevel : consistencyLevels){
+            List<User> userList = getDummyUserList(10);
+            userDAO.saveAll(userList, consistencyLevel);
+
+            long count = userDAO.countAll();
+            assertThat(count).isEqualTo(countStart + n);
+            countStart = count;
+        }
+
+
+        List<User> userList = getDummyUserList(100000);
+        Exception exception = assertThrows(
+                IllegalStateException.class,
+                () -> {
+                    userDAO.saveAll(userList);
+                    // Code that is expected to throw the exception
+                }
+        );
+        // Optionally, assert more details about the exception
+        assertEquals("A given batch can contain at most 65536 statements", exception.getMessage());
+
+    }
+
+    @Test
+    public void testSaveAllAsync() throws ExecutionException, InterruptedException, UnknownHostException{
+        long countStart = userDAO.countAll();
+
+        List<ConsistencyLevel> consistencyLevels = new ArrayList<>();
+        consistencyLevels.add(null);
+        consistencyLevels.add(ConsistencyLevel.LOCAL_ONE);
+        consistencyLevels.add(ConsistencyLevel.LOCAL_QUORUM);
+        int n = 10;
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        for (ConsistencyLevel consistencyLevel : consistencyLevels){
+            List<User> userList = getDummyUserList(10);
+            CompletionStage<Void> saveUser = userDAO.saveAllAsync(userList, consistencyLevel);
+            futures.add(saveUser.toCompletableFuture());
+        }
+
+        logger.info("Wait for insertion completed...");
+        CompletableFuture<Void>[] futureArr = futures.stream().<CompletableFuture<Void>>toArray(CompletableFuture[] ::new);
+        CompletableFuture<Void> combinedFuture
+                = CompletableFuture.allOf(futureArr);
+        combinedFuture.get();
+
+        long count = userDAO.countAll();
+        assertThat(count).isEqualTo(countStart + (long) n *consistencyLevels.size());
+
+
+
+        List<User> userList = getDummyUserList(100000);
+        // Attempt to execute saveAllAsync with a list that exceeds the limit, expecting it to fail
+        CompletionException exception = assertThrows(CompletionException.class, () -> {
+            userDAO.saveAllAsync(userList).toCompletableFuture().join();
+        });
+
+        // Optionally, assert more details about the exception
+        assertTrue(exception.getCause() instanceof IllegalStateException);
+        assertEquals("A given batch can contain at most 65536 statements", exception.getCause().getMessage());
+
+    }
+
+    @Test
+    public void test() throws ExecutionException, InterruptedException, UnknownHostException {
+        long countStart = userDAO.countAll();
 
         ConsistencyLevel consistencyLevel = null;
 //        ConsistencyLevel consistencyLevel = ConsistencyLevel.LOCAL_ONE;
